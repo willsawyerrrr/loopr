@@ -95,8 +95,8 @@ edit the values once on the device.
     - "Ask Where to Save" off, "Overwrite If File Exists" on.
 14. **Show Notification** — title `RunTitle`, body:
     "`Response.targetDistanceKm` km target → `Response.route.distanceKm` km loop,
-    score `Response.route.score`. Saved as `GpxName`. `Response.warnings` joined
-    by newline."
+    `Response.route.hilliness` (`Response.route.elevationGainPerKm` m/km). Saved
+    as `GpxName`. `Response.warnings` joined by newline."
 
 The Shortcut ends here — it produces the GPX file and nothing more. Importing it
 is a manual step **inside the Runna app** (see below), not a share-sheet hand-off.

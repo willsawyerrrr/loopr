@@ -8,18 +8,35 @@ const START: [number, number] = [-0.1278, 51.5074];
 const ROUTER_BODY = {
   routes: [
     {
+      // Far from any target used in these tests — must not be selected.
+      distance: 5000,
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [-0.1278, 51.5074, 10],
+          [-0.14, 51.49, 10],
+          [-0.1278, 51.5074, 10],
+        ],
+      },
+      ascent: 90,
+      descent: 90,
+      weight: 4000,
+      greenScore: 0.1,
+    },
+    {
       distance: 3180,
       geometry: {
         type: "LineString",
         coordinates: [
-          [-0.1278, 51.5074],
-          [-0.13, 51.5],
-          [-0.1278, 51.5074],
+          [-0.1278, 51.5074, 12.5],
+          [-0.13, 51.5, 20],
+          [-0.1278, 51.5074, 12.5],
         ],
       },
-      score: 0.82,
-      hillsScore: 0.7,
-      distanceScore: 0.95,
+      ascent: 60,
+      descent: 60,
+      weight: 3200,
+      greenScore: 0.4,
     },
   ],
 };
@@ -70,11 +87,14 @@ describe("POST /api/route — workout happy path", () => {
     expect(res.status).toBe(200);
     const json = await readJson(res);
 
-    expect(json.gpx).toContain('<trkpt lat="51.5074" lon="-0.1278"/>');
+    expect(json.gpx).toContain('<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>');
     expect(json.filename).toBe("2026-09-13-walk-run-3.2km.gpx");
     expect(json.checksum.ok).toBe(true);
+    // the 3180 m candidate, not the 5000 m one
     expect(json.route.distanceKm).toBe(3.18);
-    expect(json.route.score).toBe(0.82);
+    expect(json.route.ascentM).toBe(60);
+    expect(json.route.elevationGainPerKm).toBe(18.9);
+    expect(json.route.hilliness).toBe("rolling");
     expect(json.segments.length).toBeGreaterThan(0);
 
     // target_distance sent to Trail Router is the parsed sum, rounded
@@ -159,7 +179,10 @@ describe("generateRoute — overriddenParameters surfaced", () => {
                 {
                   distance: 3000,
                   geometry: { coordinates: [[-0.1278, 51.5074], [-0.13, 51.5]] },
-                  score: 0.5,
+                  ascent: 15,
+                  descent: 15,
+                  weight: 2800,
+                  greenScore: 0.2,
                   overriddenParameters: { target_distance: 2500 },
                 },
               ],

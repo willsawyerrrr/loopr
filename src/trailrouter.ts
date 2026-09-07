@@ -5,13 +5,16 @@ const USER_AGENT = "runna-router (personal use)";
 
 export interface TrailRouterRoute {
   distanceMeters: number;
-  /** `[lon, lat]` pairs. */
-  coordinates: [number, number][];
-  score: number;
-  hillsScore: number;
+  /** `[lon, lat]` pairs, or `[lon, lat, ele]` triples where elevation is present. */
+  coordinates: [number, number, number?][];
+  ascentMeters: number;
+  descentMeters: number;
+  /** Routing cost; lower is better within one response, not comparable across `hills_preference` values. */
+  weight: number;
   greenScore: number;
-  distanceScore: number;
-  repetitionScore: number;
+  /** Metres of the route by surface type. */
+  wayTypes?: Record<string, number>;
+  /** Non-empty when the backend clamped a request parameter. */
   overriddenParameters?: Record<string, unknown>;
 }
 
@@ -53,37 +56,55 @@ function num(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function parseRoute(raw: unknown): TrailRouterRoute | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const r = raw as Record<string, unknown>;
+  if (!isObject(raw)) return null;
+  const r = raw;
   const geometry = r["geometry"] as Record<string, unknown> | undefined;
   const coords = geometry?.["coordinates"];
   if (!Array.isArray(coords) || coords.length === 0) return null;
 
-  const coordinates: [number, number][] = [];
+  const coordinates: [number, number, number?][] = [];
   for (const point of coords) {
     if (!Array.isArray(point) || point.length < 2) return null;
     const lon = Number(point[0]);
     const lat = Number(point[1]);
     if (!Number.isFinite(lon) || !Number.isFinite(lat)) return null;
-    coordinates.push([lon, lat]);
+    const ele = point.length > 2 ? Number(point[2]) : Number.NaN;
+    coordinates.push(Number.isFinite(ele) ? [lon, lat, ele] : [lon, lat]);
   }
+  if (coordinates.length === 0) return null;
 
+  const overridden = r["overriddenParameters"];
   return {
     distanceMeters: num(r["distance"]),
     coordinates,
-    score: num(r["score"]),
-    hillsScore: num(r["hillsScore"]),
+    ascentMeters: num(r["ascent"]),
+    descentMeters: num(r["descent"]),
+    weight: num(r["weight"]),
     greenScore: num(r["greenScore"]),
-    distanceScore: num(r["distanceScore"]),
-    repetitionScore: num(r["repetitionScore"]),
-    ...(r["overriddenParameters"] && typeof r["overriddenParameters"] === "object"
-      ? { overriddenParameters: r["overriddenParameters"] as Record<string, unknown> }
+    ...(isObject(r["wayTypes"])
+      ? { wayTypes: r["wayTypes"] as Record<string, number> }
+      : {}),
+    ...(isObject(overridden) && Object.keys(overridden).length > 0
+      ? { overriddenParameters: overridden }
       : {}),
   };
 }
 
-/** Fetch and defensively parse Trail Router candidates, sorted best-first. */
+/** Ascending by distance-to-target, then by lower `weight`. */
+function byTargetFit(
+  targetMeters: number,
+): (a: TrailRouterRoute, b: TrailRouterRoute) => number {
+  return (a, b) =>
+    Math.abs(a.distanceMeters - targetMeters) -
+      Math.abs(b.distanceMeters - targetMeters) || a.weight - b.weight;
+}
+
+/** Fetch and defensively parse Trail Router candidates, closest-to-target first. */
 export async function fetchRoutes(
   q: TrailRouterQuery,
   fetchImpl: typeof fetch = fetch,
@@ -137,17 +158,16 @@ export async function fetchRoutes(
     );
   }
 
-  return routes.sort(
-    (a, b) => b.score - a.score || b.distanceScore - a.distanceScore,
-  );
+  return routes.sort(byTargetFit(q.targetDistanceMeters));
 }
 
-/** Highest `score`, tie-broken by higher `distanceScore`. */
-export function pickBest(routes: TrailRouterRoute[]): TrailRouterRoute {
+/** The candidate whose `distance` is closest to `targetMeters`, tie-broken by lower `weight`. */
+export function pickBest(
+  routes: TrailRouterRoute[],
+  targetMeters: number,
+): TrailRouterRoute {
   if (routes.length === 0) {
     throw new TrailRouterError("No routes to choose from", null, "");
   }
-  return [...routes].sort(
-    (a, b) => b.score - a.score || b.distanceScore - a.distanceScore,
-  )[0]!;
+  return [...routes].sort(byTargetFit(targetMeters))[0]!;
 }
