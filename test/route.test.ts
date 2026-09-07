@@ -35,7 +35,6 @@ function stubRouter(body: unknown, init: { status?: number } = {}) {
   return impl;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const readJson = (res: Response): Promise<any> => res.json();
 
 function postRequest(body: unknown): Request {

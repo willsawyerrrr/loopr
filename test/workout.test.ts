@@ -77,6 +77,28 @@ describe("parseWorkout — Sample B", () => {
   });
 });
 
+describe("parseWorkout — headerless continuous run", () => {
+  const parsed = parseWorkout(
+    `5 mins walking warm up\n\n750m at a conversational pace\n\n5 mins walking cool down`,
+    DEFAULT_PACES,
+  );
+
+  it("parses the first line when there is no title", () => {
+    expect(parsed.segments.map((s) => s.source)).toEqual([
+      "duration",
+      "distance",
+      "duration",
+    ]);
+    expect(parsed.targetDistanceMeters).toBeGreaterThan(1550);
+    expect(parsed.targetDistanceMeters).toBeLessThan(1750);
+  });
+
+  it("has no stated checksum and no warnings", () => {
+    expect(parsed.checksum.statedMinutes).toBeNull();
+    expect(parsed.warnings).toEqual([]);
+  });
+});
+
 describe("parseWorkout — repeat markers", () => {
   it("handles `Repeat xN`", () => {
     const parsed = parseWorkout(

@@ -158,7 +158,9 @@ export function parseWorkout(
   const firstNonEmpty = lines.find((l) => l.length > 0);
   const statedMatch = firstNonEmpty?.match(/•\s*(\d+)\s*m\b/);
   const statedMinutes = statedMatch ? parseInt(statedMatch[1]!, 10) : null;
-  const headerLine = firstNonEmpty;
+  // Only a line carrying the `• NNm` token is demonstrably a title/checksum
+  // line and safe to skip; otherwise the first line is a real segment.
+  const headerLine = statedMatch ? firstNonEmpty : undefined;
 
   let pendingReps = 1;
   let inRepeat = false;
@@ -170,7 +172,7 @@ export function parseWorkout(
       pendingReps = 1;
       continue;
     }
-    if (!headerSeen && line === headerLine) {
+    if (!headerSeen && headerLine !== undefined && line === headerLine) {
       headerSeen = true;
       continue;
     }
