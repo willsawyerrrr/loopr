@@ -1,0 +1,19 @@
+{
+  "name": "runna-router",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generate a GPX loop route matching the next planned run in a Runna training plan.",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.7"
+  }
+}

@@ -1,0 +1,177 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { POST, GET } from "../api/route.js";
+import { generateRoute } from "../src/route.js";
+import { DEFAULT_PACES } from "../src/config.js";
+
+const START: [number, number] = [-0.1278, 51.5074];
+
+const ROUTER_BODY = {
+  routes: [
+    {
+      distance: 3180,
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [-0.1278, 51.5074],
+          [-0.13, 51.5],
+          [-0.1278, 51.5074],
+        ],
+      },
+      score: 0.82,
+      hillsScore: 0.7,
+      distanceScore: 0.95,
+    },
+  ],
+};
+
+function stubRouter(body: unknown, init: { status?: number } = {}) {
+  const { status = 200 } = init;
+  const text = typeof body === "string" ? body : JSON.stringify(body);
+  const impl = vi.fn(
+    (_url: string, _opts?: RequestInit): Promise<Response> =>
+      Promise.resolve(new Response(text, { status })),
+  );
+  vi.stubGlobal("fetch", impl);
+  return impl;
+}
+
+const readJson = (res: Response): Promise<any> => res.json();
+
+function postRequest(body: unknown): Request {
+  return new Request("https://runna-router.willsawyerrrr.dev/api/route", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+const SAMPLE_A = `Walk Run • 29m • 29m
+
+5 mins walking warm up
+
+4 reps of:
+• 60s at a conversational pace, 30s walking
+• 2 mins at a conversational pace, 60s walking
+
+60s at a conversational pace
+
+5 mins walking cool down`;
+
+describe("POST /api/route — workout happy path", () => {
+  it("returns gpx, filename, checksum and route metadata", async () => {
+    const impl = stubRouter(ROUTER_BODY);
+    const res = await POST(
+      postRequest({ workout: SAMPLE_A, title: "Walk Run", date: "2026-09-13", start: START }),
+    );
+    expect(res.status).toBe(200);
+    const json = await readJson(res);
+
+    expect(json.gpx).toContain('<trkpt lat="51.5074" lon="-0.1278"/>');
+    expect(json.filename).toBe("2026-09-13-walk-run-3.2km.gpx");
+    expect(json.checksum.ok).toBe(true);
+    expect(json.route.distanceKm).toBe(3.18);
+    expect(json.route.score).toBe(0.82);
+    expect(json.segments.length).toBeGreaterThan(0);
+
+    // target_distance sent to Trail Router is the parsed sum, rounded
+    const sent = new URL(impl.mock.calls[0]![0]).searchParams.get("target_distance");
+    expect(Number(sent)).toBeGreaterThan(3000);
+    expect(Number(sent)).toBeLessThan(3400);
+  });
+});
+
+describe("POST /api/route — manual override path", () => {
+  it("skips parsing and uses targetDistanceKm", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(postRequest({ targetDistanceKm: 3.2, start: START }));
+    expect(res.status).toBe(200);
+    const json = await readJson(res);
+    expect(json.segments).toEqual([]);
+    expect(json.checksum).toEqual({ statedMinutes: null, computedMinutes: 0, ok: true });
+    expect(json.filename).toBe("route-3.2km.gpx");
+    expect(json.targetDistanceKm).toBe(3.2);
+  });
+});
+
+describe("POST /api/route — error branches", () => {
+  it("400 on malformed JSON", async () => {
+    stubRouter(ROUTER_BODY);
+    const req = new Request("https://x/api/route", { method: "POST", body: "{ not json" });
+    expect((await POST(req)).status).toBe(400);
+  });
+
+  it("400 on missing start", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(postRequest({ targetDistanceKm: 3 }));
+    expect(res.status).toBe(400);
+  });
+
+  it("400 when neither workout nor targetDistanceKm", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(postRequest({ start: START }));
+    expect(res.status).toBe(400);
+  });
+
+  it("422 when the workout yields no target distance", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(postRequest({ workout: "Rest day\n\nNothing today", start: START }));
+    expect(res.status).toBe(422);
+    expect((await readJson(res)).error).toMatch(/target distance/i);
+  });
+
+  it("502 when Trail Router fails", async () => {
+    stubRouter("upstream down", { status: 503 });
+    const res = await POST(postRequest({ targetDistanceKm: 3, start: START }));
+    expect(res.status).toBe(502);
+    expect((await readJson(res)).detail).toContain("upstream down");
+  });
+});
+
+describe("GET /api/route — manual test endpoint", () => {
+  it("maps query params to a generated route", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await GET(
+      new Request("https://x/api/route?distanceKm=3.2&start=-0.1278,51.5074&hills=0.5"),
+    );
+    expect(res.status).toBe(200);
+    expect((await readJson(res)).filename).toBe("route-3.2km.gpx");
+  });
+
+  it("400 without distanceKm", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await GET(new Request("https://x/api/route?start=-0.1278,51.5074"));
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("generateRoute — overriddenParameters surfaced", () => {
+  it("adds a warning and route.overriddenParameters", async () => {
+    const impl = vi.fn(
+      (_url: string, _opts?: RequestInit): Promise<Response> =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              routes: [
+                {
+                  distance: 3000,
+                  geometry: { coordinates: [[-0.1278, 51.5074], [-0.13, 51.5]] },
+                  score: 0.5,
+                  overriddenParameters: { target_distance: 2500 },
+                },
+              ],
+            }),
+          ),
+        ),
+    );
+    const result = await generateRoute(
+      { targetDistanceKm: 3, config: { start: START, paces: DEFAULT_PACES } },
+      impl as unknown as typeof fetch,
+    );
+    expect(result.route.overriddenParameters).toEqual({ target_distance: 2500 });
+    expect(result.warnings.some((w) => w.includes("overrode"))).toBe(true);
+  });
+});
