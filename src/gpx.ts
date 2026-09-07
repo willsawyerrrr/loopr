@@ -10,16 +10,22 @@ function escapeXml(value: string): string {
 /**
  * Render a GeoJSON LineString as a GPX 1.1 track.
  *
- * `coordinates` are `[lon, lat]` pairs (GeoJSON order); each becomes one
- * `<trkpt lat lon>` with the order swapped. No `<ele>` or `<time>` is emitted.
+ * `coordinates` are `[lon, lat]` pairs or `[lon, lat, ele]` triples (GeoJSON
+ * order); each becomes one `<trkpt lat lon>` with the order swapped. A nested
+ * `<ele>` is emitted only for a tuple carrying a finite 3rd value. No `<time>`
+ * is emitted.
  */
 export function lineStringToGpx(
-  coordinates: [number, number][],
+  coordinates: [number, number, number?][],
   name: string,
 ): string {
   const safeName = escapeXml(name);
   const points = coordinates
-    .map(([lon, lat]) => `      <trkpt lat="${lat}" lon="${lon}"/>`)
+    .map(([lon, lat, ele]) =>
+      typeof ele === "number" && Number.isFinite(ele)
+        ? `      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>`
+        : `      <trkpt lat="${lat}" lon="${lon}"/>`,
+    )
     .join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>

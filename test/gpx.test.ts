@@ -23,9 +23,34 @@ describe("lineStringToGpx", () => {
     expect(gpx.match(/<trk>/g)).toHaveLength(1);
   });
 
-  it("omits elevation and time", () => {
+  it("omits elevation for 2-tuples, and time always", () => {
     expect(gpx).not.toContain("<ele>");
     expect(gpx).not.toContain("<time>");
+  });
+
+  it("emits <ele> for [lon, lat, ele] triples", () => {
+    const withEle = lineStringToGpx(
+      [
+        [-0.1278, 51.5074, 12.5],
+        [-0.12, 51.51, 30],
+      ],
+      "Hilly loop",
+    );
+    expect(withEle).toContain('<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>');
+    expect(withEle).toContain('<trkpt lat="51.51" lon="-0.12"><ele>30</ele></trkpt>');
+    expect(withEle).not.toContain("<time>");
+  });
+
+  it("mixes elevated and flat points by tuple length", () => {
+    const mixed = lineStringToGpx(
+      [
+        [-0.1278, 51.5074, 12.5],
+        [-0.12, 51.51],
+      ],
+      "Partial",
+    );
+    expect(mixed).toContain('<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>');
+    expect(mixed).toContain('<trkpt lat="51.51" lon="-0.12"/>');
   });
 
   it("declares creator runna-router and GPX 1.1", () => {
