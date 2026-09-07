@@ -87,35 +87,44 @@ GET only; all parameters on the query string.
 | `skip_segments` | string, comma-separated waypoint indices | Straight lines between those waypoints. |
 | `green_debug` | boolean | Adds a `greenDebug` object per route. |
 
-**Response shape:**
+**Response shape** (verified against the live API — the schema on
+`trailrouter.com/api` lists `score`/`hillsScore`/`distanceScore`/
+`repetitionScore`, none of which the live endpoint actually returns):
 
 ```jsonc
 {
-  "routes": [
+  "routes": [                                             // ~10 candidates
     {
-      "distance": 10123,                                  // metres
+      "distance": 3181,                                    // metres, actual length
       "geometry": { "type": "LineString",
-                    "coordinates": [[lon, lat], ...] },    // GeoJSON, [lon,lat], no elevation
-      "waypoints": [[lon, lat], ...],
-      "waypointIndices": [0, 42, ...],
-      "score": 0.87,                                       // overall 0..1
-      "greenScore": 0.9,
-      "hillsScore": 0.8,
-      "repetitionScore": 0.95,
-      "distanceScore": 0.99,
-      "inputParameters": { ... },
-      "overriddenParameters": { ... },                     // present if backend adjusted params
-      "greenDebug": { ... }                                // only when green_debug=true
+                    "coordinates": [[lon, lat, ele], ...] }, // GeoJSON; 3rd value is elevation (m)
+      "waypoints": [[lon, lat, ele], ...],                 // loop anchors only, not turn instructions
+      "waypointIndices": [0, 33, ...],                     // indices into geometry.coordinates
+      "ascent": 73.4,                                      // total climb (m); == descent for a loop
+      "descent": 73.4,
+      "weight": 4007.3,                                    // routing cost; lower = better WITHIN one
+                                                           //   response, NOT comparable across
+                                                           //   hills_preference values (hp=1 is ~1000×)
+      "duration": 3827043,                                 // ms; not useful (generic walking speed)
+      "wayTypes": { "footway": 72.4, "street": 13.3, ... },// metres by surface type
+      "greenScore": 0.13,                                  // greenery fraction 0..1
+      "inputParameters": { ... },                          // echo
+      "overriddenParameters": { "avoidRepetition": false } // non-empty when the backend clamped a param
     }
   ]
 }
 ```
 
-- Top level is `{ "routes": [ ... ] }` — multiple candidates; pick by `score`.
-  Trail Router returns candidates internally filtered to ~50–200% of
-  `target_distance`. No seed / retry loop needed (that is a GraphHopper/ORS
-  concept) — pick the best of what's returned.
-- `geometry.coordinates` are `[lon, lat]`, **no elevation**.
+- Top level is `{ "routes": [ ... ] }` — **~10 candidates** per call. `hills_preference`
+  is applied server-side (hp −1 → ascent ~40–70 m; hp 0 → ~50–110 m; hp 1 →
+  ~75–130 m over ~5 km), so every candidate already reflects the hill
+  preference. **Selection is therefore by length**: pick the candidate whose
+  `distance` is closest to `target_distance`, tie-broken by lower `weight`. No
+  seed / retry loop (that is a GraphHopper/ORS concept).
+- `geometry.coordinates` are `[lon, lat, ele]` — **elevation is present** and is
+  carried into the GPX `<ele>`.
+- Hilliness is derived locally as `ascent / (distance / 1000)` m/km and banded
+  per §1: `< 10` flat, `10–25` rolling, `> 25` hilly.
 - **No GPX output** — JSON only. Conversion is the function's job.
 - **No authentication**, no documented rate limits, no published API terms or
   attribution demand. Treat as best-effort courtesy use: one call per planned
@@ -191,11 +200,11 @@ regardless, so full unattended operation is not the goal.
 
 ### 5. GPX conversion
 
-- **Coordinate order:** GeoJSON is `[lon, lat]`; GPX uses `lat="…" lon="…"` —
-  latitude first. Every point must be swapped.
-- Runna needs a **track** (`<trk><trkseg><trkpt>`), not a `<rte>`. `<ele>` and
-  `<time>` are optional and omitted (Trail Router returns no elevation).
-  Waypoints (`<wpt>`) not needed.
+- **Coordinate order:** GeoJSON is `[lon, lat, ele?]`; GPX uses `lat="…" lon="…"`
+  — latitude first. Every point must be swapped.
+- Runna needs a **track** (`<trk><trkseg><trkpt>`), not a `<rte>`. `<time>` is
+  omitted. `<ele>` is emitted per point when the Trail Router geometry carries
+  elevation (it does for roundtrip routes). Waypoints (`<wpt>`) not needed.
 - Minimal valid GPX 1.1:
 
 ```xml
@@ -257,10 +266,13 @@ regardless, so full unattended operation is not the goal.
 ## Assumptions
 
 1. Trail Router response is `{ routes: [ { distance, geometry(LineString
-   [lon,lat]), waypoints, waypointIndices, score, greenScore, hillsScore,
-   repetitionScore, distanceScore, inputParameters, overriddenParameters } ] }` —
-   parse defensively (no formal schema published).
-2. `geometry` carries no elevation; output GPX omits `<ele>` and `<time>`.
+   [lon,lat,ele]), waypoints, waypointIndices, ascent, descent, weight, duration,
+   wayTypes, greenScore, inputParameters, overriddenParameters } ] }` — verified
+   against the live API; parse defensively (no formal schema published). The
+   `score`/`hillsScore`/`distanceScore`/`repetitionScore` fields in the API docs
+   do not exist on the live endpoint.
+2. `geometry` carries elevation as a 3rd coordinate value; the GPX emits `<ele>`
+   per point and omits `<time>`.
 3. Trail Router imposes no auth and tolerates modest personal volume; self-limit
    to one call per planned run.
 4. The Vercel function does workout parse + route selection + GPX conversion and

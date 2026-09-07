@@ -22,17 +22,18 @@ iOS 26 Shortcut "Runna Route"
         ▼
   Vercel function  api/route.ts
     parseWorkout(text, paces)   → segments + targetDistanceMeters + checksum
-    trailRouter(start, target, prefs) → best-scoring candidate route
-    lineStringToGpx(coords, name)     → GPX 1.1 track XML
-    → JSON { gpx, filename, targetDistanceKm, route:{distanceKm,score,...},
+    trailRouter(start, target, prefs) → candidate closest to target distance
+    lineStringToGpx(coords, name)     → GPX 1.1 track XML (with <ele>)
+    → JSON { gpx, filename, targetDistanceKm,
+             route:{distanceKm, ascentM, descentM, elevationGainPerKm, hilliness, greenScore},
              segments, checksum, warnings }
         │
         ▼
   Get Dictionary Value → gpx, checksum.ok, targetDistanceKm, route.distanceKm
   If checksum.ok == false → Ask for Input (manual km) → re-POST { targetDistanceKm, ... }
   Save File → iCloud Drive / Shortcuts / <filename>
-  Show notification (distance, score, warnings)
-  Share sheet → user picks Runna
+  Show notification (distance, hilliness, warnings)
+  Import into Runna manually: workout → Add Route → file picker
 ```
 
 Companion Shortcut **"Update Runna Paces"** edits `runna-router-config.json`.
@@ -156,12 +157,12 @@ Parsing rules:
 ```ts
 export interface TrailRouterRoute {
   distanceMeters: number;
-  coordinates: [number, number][];  // [lon, lat]
-  score: number;
-  hillsScore: number;
+  coordinates: [number, number, number?][];  // [lon, lat, ele?]
+  ascentMeters: number;
+  descentMeters: number;
+  weight: number;                            // routing cost; lower = better within one response
   greenScore: number;
-  distanceScore: number;
-  repetitionScore: number;
+  wayTypes?: Record<string, number>;
   overriddenParameters?: Record<string, unknown>;
 }
 
@@ -175,9 +176,9 @@ export interface TrailRouterQuery {
 export async function fetchRoutes(
   q: TrailRouterQuery,
   fetchImpl?: typeof fetch,
-): Promise<TrailRouterRoute[]>;      // parsed, defensive, sorted best-first
+): Promise<TrailRouterRoute[]>;      // parsed, defensive, closest-to-target first
 
-export function pickBest(routes: TrailRouterRoute[]): TrailRouterRoute;
+export function pickBest(routes: TrailRouterRoute[], targetMeters: number): TrailRouterRoute;
 ```
 
 - Build `GET https://trailrouter.com/ors/experimentalroutes` with
@@ -186,23 +187,28 @@ export function pickBest(routes: TrailRouterRoute[]): TrailRouterRoute;
   `avoid_repetition=true`, `avoid_unsafe_streets=true`,
   `avoid_unlit_streets=true`.
 - Send `User-Agent: runna-router (personal use)`.
-- Defensive parse: tolerate missing component scores (default 0), require
+- Defensive parse against the live schema (research §2 — not the API-docs
+  schema): tolerate missing numeric fields (default 0), require
   `geometry.coordinates` non-empty, `routes` non-empty → else throw
-  `TrailRouterError` with status + body snippet.
-- `pickBest`: max `score`; tie-break higher `distanceScore`.
-- No seed/retry loop — Trail Router already returns multiple candidates.
+  `TrailRouterError` with status + body snippet. Preserve the 3rd coordinate
+  value (elevation) when present.
+- `pickBest`: candidate with `distanceMeters` closest to `targetMeters`,
+  tie-broken by lower `weight`. `hills_preference` is honoured server-side, so
+  every candidate already reflects it — selection only fixes the length.
+- No seed/retry loop — Trail Router returns ~10 candidates per call.
 
 ### `src/gpx.ts`
 
 ```ts
 export function lineStringToGpx(
-  coordinates: [number, number][],   // [lon, lat]
+  coordinates: [number, number, number?][],   // [lon, lat, ele?]
   name: string,
 ): string;
 ```
 
 - GPX 1.1, single `<trk><trkseg>`, one `<trkpt lat lon>` per coordinate
-  (swapped), no `<ele>`/`<time>`. `creator="runna-router"`. XML-escape `name`.
+  (swapped). Nested `<ele>` only when the tuple carries a finite 3rd value; no
+  `<time>`. `creator="runna-router"`. XML-escape `name`.
 
 ### `src/route.ts`
 
@@ -213,8 +219,11 @@ export interface RouteResult {
   targetDistanceKm: number;
   route: {
     distanceKm: number;
-    score: number;
-    hillsScore: number;
+    ascentM: number;
+    descentM: number;
+    elevationGainPerKm: number;
+    hilliness: "flat" | "rolling" | "hilly";   // banded on elevationGainPerKm, research §1
+    greenScore: number;
     overriddenParameters?: Record<string, unknown>;
   };
   segments: Segment[];

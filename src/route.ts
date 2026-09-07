@@ -3,6 +3,15 @@ import { fetchRoutes, pickBest } from "./trailrouter.js";
 import { lineStringToGpx } from "./gpx.js";
 import { parseWorkout, type ParsedWorkout, type Segment } from "./workout.js";
 
+/** Terrain band, from elevation gain per km (research §1): `<10` flat, `10–25` rolling, `>25` hilly. */
+export type Hilliness = "flat" | "rolling" | "hilly";
+
+function hilliness(gainPerKm: number): Hilliness {
+  if (gainPerKm < 10) return "flat";
+  if (gainPerKm <= 25) return "rolling";
+  return "hilly";
+}
+
 export interface RouteResult {
   gpx: string;
   /** e.g. `2026-09-13-walk-run-3.2km.gpx`. */
@@ -10,8 +19,11 @@ export interface RouteResult {
   targetDistanceKm: number;
   route: {
     distanceKm: number;
-    score: number;
-    hillsScore: number;
+    ascentM: number;
+    descentM: number;
+    elevationGainPerKm: number;
+    hilliness: Hilliness;
+    greenScore: number;
     overriddenParameters?: Record<string, unknown>;
   };
   segments: Segment[];
@@ -114,7 +126,7 @@ export async function generateRoute(
     },
     fetchImpl,
   );
-  const best = pickBest(routes);
+  const best = pickBest(routes, targetMeters);
 
   if (best.overriddenParameters && Object.keys(best.overriddenParameters).length > 0) {
     warnings.push(
@@ -130,14 +142,22 @@ export async function generateRoute(
       ? `${isoDate}-${slug(title)}-${km}km.gpx`
       : `route-${km}km.gpx`;
 
+  const gainPerKm =
+    best.distanceMeters > 0
+      ? best.ascentMeters / (best.distanceMeters / 1000)
+      : 0;
+
   return {
     gpx: lineStringToGpx(best.coordinates, name),
     filename,
     targetDistanceKm: round2(targetMeters / 1000),
     route: {
       distanceKm: round2(best.distanceMeters / 1000),
-      score: best.score,
-      hillsScore: best.hillsScore,
+      ascentM: round1(best.ascentMeters),
+      descentM: round1(best.descentMeters),
+      elevationGainPerKm: round1(gainPerKm),
+      hilliness: hilliness(gainPerKm),
+      greenScore: round2(best.greenScore),
       ...(best.overriddenParameters
         ? { overriddenParameters: best.overriddenParameters }
         : {}),
