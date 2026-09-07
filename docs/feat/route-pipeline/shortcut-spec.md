@@ -91,13 +91,28 @@ edit the values once on the device.
       → overwrite `Response`.
 12. **Get Dictionary Value** — `gpx` → `GpxText`; `filename` → `GpxName`.
 13. **Text** — `GpxText`; **Save File**
-    - Service iCloud Drive, Destination `Shortcuts/`, filename `GpxName`
+    - Service iCloud Drive, Destination `Shortcuts/routes/`, filename `GpxName`
     - "Ask Where to Save" off, "Overwrite If File Exists" on.
 14. **Show Notification** — title `RunTitle`, body:
     "`Response.targetDistanceKm` km target → `Response.route.distanceKm` km loop,
-    score `Response.route.score`. `Response.warnings` joined by newline."
-15. **Get File** (the just-saved GPX) → **Share** → user taps **Runna** (or
-    Files → Runna). This step is always interactive.
+    score `Response.route.score`. Saved as `GpxName`. `Response.warnings` joined
+    by newline."
+
+The Shortcut ends here — it produces the GPX file and nothing more. Importing it
+is a manual step **inside the Runna app** (see below), not a share-sheet hand-off.
+
+### Importing the GPX into Runna
+
+Confirmed: Runna's GPX import is **in-app**, not a share-sheet target.
+
+1. Open Runna → the planned workout → **Add Route** (the button in the workout
+   action bar).
+2. Choose the GPX route option → the file picker opens on Files / iCloud Drive.
+3. Pick `Shortcuts/routes/<filename>.gpx` (where step 13 saved it).
+
+No Strava Premium is needed for this path (that requirement is only for attaching
+a public Strava route). The route then follows on the watch when recording via
+the Runna iOS app.
 
 ### Notes
 
@@ -148,10 +163,10 @@ edit the JSON file directly in the Files app.
 
 Caveat: since iOS 17 (unchanged through iOS 26) a "Run Immediately" automation
 fires with no confirmation tap, **but Apple always shows an unsuppressable
-notification banner** while it runs. The final "share the GPX into Runna" step
-(step 15) is an interactive share-sheet action regardless, so the pipeline is
-"one tap in the morning", not fully hands-off. Treat the automation as a prompt
-to open the notification and finish the hand-off.
+notification banner** while it runs. Importing the GPX is a manual in-app step in
+Runna regardless, so the pipeline is "generate overnight, import in the morning",
+not fully hands-off. Treat the automation as a prompt to open Runna and pull in
+the freshly saved route.
 
 ## Manual verification checklist (out of band)
 
@@ -159,9 +174,9 @@ Not automated — confirm on the device after the function is deployed:
 
 1. `GET https://runna-router.willsawyerrrr.dev/api/route?distanceKm=3&start=<lon>,<lat>`
    in a browser returns JSON with a `gpx` field.
-2. Save that `gpx` to a `.gpx` file; open it — it should import as a route into a
-   Runna workout (entry point: share sheet into Runna, or Runna's in-app file
-   picker — verify which).
+2. Save that `gpx` to a `.gpx` file and import it via Runna → planned workout →
+   **Add Route** (in-app file picker). Confirmed working; no Strava Premium
+   needed.
 3. The route renders on the watch during a recorded run (watchOS ≥ 11).
 4. A structured workout (warm-up / intervals / cool-down) still shows the route
    overlay, not just a plain run.

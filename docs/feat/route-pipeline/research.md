@@ -231,11 +231,12 @@ regardless, so full unattended operation is not the goal.
 
 ## Open questions
 
-1. **Runna GPX import flow** — support docs confirm GPX routes can be added to a
-   workout but document the step-by-step only for Strava routes. The GPX entry
-   point (share sheet into Runna? in-app file picker? per-workout vs profile?)
-   needs hands-on confirmation on device. Strava path needs Strava Premium; the
-   GPX path appears not to.
+1. ~~**Runna GPX import flow**~~ — **resolved (confirmed on device):** import is
+   **in-app**, not a share-sheet target. Runna → planned workout → **Add Route**
+   → in-app file picker → choose the GPX from Files/iCloud. No Strava Premium
+   needed (that requirement is only for attaching a public Strava route). The
+   Shortcut's job ends at saving the GPX to a known Files location; the import
+   itself stays a manual in-app step.
 2. **Runna GPX constraints** — no documented limits on point count, file size, or
    whether `<ele>` is needed for the watch map. Assume track + no elevation
    works; verify.
@@ -272,9 +273,9 @@ regardless, so full unattended operation is not the goal.
    confirmation tap but shows an unsuppressable banner; the final Runna hand-off
    is an interactive share-sheet step regardless.
 7. Runna accepts a plain GPX 1.1 single-segment track, no waypoints, for a
-   planned/instant workout, and displays it on watchOS ≥ 11 when recording via
-   the iOS app. Garmin support is out of scope for v1 (same GPX loads into Garmin
-   Connect directly).
+   planned workout via the in-app **Add Route** picker, and displays it on
+   watchOS ≥ 11 when recording via the iOS app. Garmin support is out of scope
+   for v1 (same GPX loads into Garmin Connect directly).
 8. Regex parsing of the workout description is primary; the `• NNm` checksum
    validates each parse; `Use Model` is a possible future fallback, not v1.
 9. Node 22.x on Vercel; `api/route.ts` with a Web-standard handler; no
