@@ -138,9 +138,12 @@ adds capability on top.
 
 **Calendar:**
 - **Find Calendar Events** — filters: `Start Date`, `End Date`, `Is All Day`,
-  `Calendar`, `Location`, `Duration`, `Title`, `Notes`. Date filters support a
-  range of days with unit selection. "All-day events in the Runna calendar
-  starting in the next 7 days" is directly expressible.
+  `Calendar`, `Location`, `Duration`, `Title`, `Notes`. Date filters support
+  exact dates, relative windows, and `is in the range` between two dates.
+  **Gotcha:** a run planned for today is an all-day event with a start of 00:00
+  today, which is in the past once the Shortcut runs — so "Start Date is in the
+  next N days" skips today's run. Filter `Start Date is in the range` from the
+  *start of today* (Adjust Date → Get Start of Day) to +8 days instead.
 - **Get Details of Calendar Events** — exposes `Notes` (the event description),
   `Title`, `Start Date`, `End Date`, `All Day`, `Calendar`, `Location`, `URL`.
   No official notes-length limit documented; add the `• NNm` checksum to catch a

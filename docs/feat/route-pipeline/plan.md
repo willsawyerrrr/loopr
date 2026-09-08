@@ -13,7 +13,7 @@ user on their iPhone to import into Runna manually.
 
 ```
 iOS 26 Shortcut "Runna Route"
-  Find Calendar Events (Runna cal, all-day, next 7 days)
+  Find Calendar Events (Runna cal, all-day, start of today → +8 days)
   Get Details → Notes (workout text) + Start Date + Title
   Get File → runna-router-config.json (iCloud Drive)
   POST https://runna-router.willsawyerrrr.dev/api/route
