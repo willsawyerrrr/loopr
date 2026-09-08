@@ -14,8 +14,9 @@ candidate closest to that distance, and converts it to a GPX 1.1 track.
 { "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "segments": [], "checksum": {}, "warnings": [] }
 ```
 
-`?format=gpx` returns the file directly; `?format=html` returns a Leaflet map
-page for eyeballing the route on OpenStreetMap.
+The response also carries a `previewUrl` — a link to a Leaflet map of that exact
+route on OpenStreetMap. `?format=gpx` returns the file directly; `?format=html`
+returns the same map page rendered from a fresh route.
 
 An iOS 26 Shortcut reads the workout from the subscribed Runna calendar, calls
 this function, and saves the GPX to iCloud Drive; you import it in the Runna app

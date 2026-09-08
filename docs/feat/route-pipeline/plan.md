@@ -26,11 +26,12 @@ iOS 26 Shortcut "Runna Route"
     lineStringToGpx(coords, name)     → GPX 1.1 track XML (with <ele>)
     → JSON { gpx, filename, targetDistanceKm,
              route:{distanceKm, ascentM, descentM, elevationGainPerKm, hilliness, greenScore},
-             segments, checksum, warnings }
+             segments, checksum, warnings, previewUrl }
         │
         ▼
-  Get Dictionary Value → gpx, checksum.ok, targetDistanceKm, route.distanceKm
+  Get Dictionary Value → gpx, checksum.ok, targetDistanceKm, route.distanceKm, previewUrl
   If checksum.ok == false → Ask for Input (manual km) → re-POST { targetDistanceKm, ... }
+  (optional) Show Web Page → previewUrl  — map of this exact route
   Save File → iCloud Drive / Shortcuts / <filename>
   Show notification (distance, hilliness, warnings)
   Import into Runna manually: workout → Add Route → file picker
@@ -41,13 +42,14 @@ Companion Shortcut **"Update Runna Paces"** edits `runna-router-config.json`.
 ## Repo layout
 
 ```
-api/route.ts                 Vercel function (thin HTTP wrapper over src/)
+api/route.ts                 Vercel function — the pipeline (thin wrapper over src/)
+api/preview.ts               Vercel function — renders a previewUrl token as a map page
 src/
   workout.ts                 parse Runna workout text → segments → target distance
   trailrouter.ts             Trail Router API client + best-route selection
   gpx.ts                     GeoJSON LineString → GPX 1.1 track
   route.ts                   orchestration: text+config → { gpx, coordinates, metadata }
-  preview.ts                 RouteResult → standalone Leaflet map page (format=html)
+  preview.ts                 PreviewData: map-page HTML + encode/decode the previewUrl token
   config.ts                  types + defaults (prefs, fallback paces)
 test/
   workout.test.ts
@@ -262,15 +264,26 @@ export async function POST(request: Request): Promise<Response>;
 - Merge `paces` over `DEFAULT_PACES`; apply `DEFAULTS` for missing prefs.
 - Call `generateRoute`; on `TrailRouterError` → 502 with `{ error, detail }`;
   on parse error → 422 `{ error, detail }`.
-- 200 → `Response.json(result)` (the `coordinates` array is stripped from the
-  JSON body — it's only for the HTML view).
+- 200 → `Response.json({ ...result, previewUrl })`. The `coordinates` array is
+  stripped from the body; `previewUrl` is `<origin>/api/preview?r=<token>` where
+  the token is the gzipped-base64url `PreviewData` for this exact route.
 - Also accept `GET /api/route?distanceKm=&start=lon,lat&hills=` for quick manual
   testing (thin wrapper mapping query → `generateRoute`).
 - `?format=` (query on GET or POST, or `format` in the POST body) selects the
   output: `json` (default), `gpx` (the file, `application/gpx+xml` + download
-  disposition), or `html` (a Leaflet map page — route drawn on OpenStreetMap
-  with a distance/hilliness/climb panel, for eyeballing a route in a browser).
-  An unknown value falls back to `json`.
+  disposition), or `html` (the same Leaflet map page as `previewUrl`, but
+  rendered from a fresh `generateRoute` — for eyeballing in a browser and
+  comparing `hills` settings). An unknown value falls back to `json`.
+
+### `api/preview.ts`
+
+```ts
+export async function GET(request: Request): Promise<Response>;
+```
+
+- `?r=<token>` → `decodePreview` → `renderMapPage` → `text/html`.
+- 400 on a missing or malformed token. No Trail Router call — the token holds
+  the geometry, so this renders exactly the route `/api/route` returned.
 
 ## Phased delivery (commit breakdown for the implementer)
 
