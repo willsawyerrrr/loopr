@@ -183,8 +183,8 @@ regardless, so full unattended operation is not the goal.
 
 ### 4. Vercel
 
-- Single function at `api/route.ts` (repo root). No `vercel.json` needed for a
-  basic function.
+- Functions at `api/route.ts` (the pipeline) and `api/preview.ts` (renders a
+  `previewUrl` map token). No `vercel.json` needed.
 - Handler: Web-standard `export function POST(request: Request)` returning
   `Response.json(...)`, or the Node `VercelRequest`/`VercelResponse` signature.
 - TypeScript transpiled automatically (esbuild); root `tsconfig.json` honoured

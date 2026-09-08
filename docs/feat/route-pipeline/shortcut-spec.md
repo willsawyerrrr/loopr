@@ -126,17 +126,21 @@ the Runna iOS app.
 
 ### Previewing a route on a map
 
-Any request also takes `format=html`, which returns a Leaflet page showing the
-loop drawn on OpenStreetMap with a distance / hilliness / climb panel. To eyeball
-before importing:
+The JSON response carries a **`previewUrl`** — a link to a Leaflet page showing
+*this exact* route (its geometry is packed into the link, so opening it makes no
+second Trail Router call) on OpenStreetMap with a distance / hilliness / climb
+panel and any warnings.
 
-- **Manual:** open
+- **From the Shortcut:** after step 12, add **Show Web Page** with
+  `Response.previewUrl` — an in-app look you dismiss back to the Shortcut. Wrap it
+  in a **Choose from Menu** ("Preview" / "Skip") if you don't always want it.
+- **Manual / tuning:** open
   `https://runna-router.willsawyerrrr.dev/api/route?distanceKm=<km>&start=<lon>,<lat>&hills=<-1..1>&format=html`
-  in a browser. Vary `hills` to compare.
-- **From the Shortcut:** duplicate step 9's request with `?format=html` on the
-  URL, then **Show Web Page** (or **Open URLs**) with the result — a quick look
-  before you switch to Runna. `format=gpx` returns the file directly if you'd
-  rather skip Save File.
+  in a browser and vary `hills`. (This form *does* re-run Trail Router, so the
+  loop may differ slightly from a saved one — fine for comparing settings.)
+
+`format=gpx` on any request returns the file directly if you'd rather skip Save
+File.
 
 ### Notes
 

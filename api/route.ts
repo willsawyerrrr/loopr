@@ -5,7 +5,7 @@ import {
   RouteParseError,
   type GenerateRouteInput,
 } from "../src/route.js";
-import { renderMapPage } from "../src/preview.js";
+import { encodePreview, previewData, renderMapPage } from "../src/preview.js";
 import { TrailRouterError } from "../src/trailrouter.js";
 
 type Format = "json" | "html" | "gpx";
@@ -62,9 +62,15 @@ function buildConfig(
   };
 }
 
-async function run(input: GenerateRouteInput, format: Format): Promise<Response> {
+async function run(
+  input: GenerateRouteInput,
+  format: Format,
+  origin: string,
+): Promise<Response> {
   try {
     const { coordinates, ...result } = await generateRoute(input);
+    const name = input.title?.trim() || "Runna route";
+    const preview = previewData({ ...result, coordinates }, name);
 
     if (format === "gpx") {
       return new Response(result.gpx, {
@@ -76,13 +82,15 @@ async function run(input: GenerateRouteInput, format: Format): Promise<Response>
       });
     }
     if (format === "html") {
-      const name = input.title?.trim() || "Runna route";
-      return new Response(renderMapPage({ ...result, coordinates }, name), {
+      return new Response(renderMapPage(preview), {
         status: 200,
         headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
-    return json(result, 200);
+    return json(
+      { ...result, previewUrl: `${origin}/api/preview?r=${encodePreview(preview)}` },
+      200,
+    );
   } catch (err) {
     if (err instanceof RouteInputError) return json({ error: err.message }, 400);
     if (err instanceof RouteParseError) {
@@ -103,8 +111,9 @@ export async function POST(request: Request): Promise<Response> {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
+  const url = new URL(request.url);
   const format = asFormat(
-    new URL(request.url).searchParams.get("format") ??
+    url.searchParams.get("format") ??
       (typeof body["format"] === "string" ? body["format"] : null),
   );
 
@@ -134,11 +143,13 @@ export async function POST(request: Request): Promise<Response> {
       ),
     },
     format,
+    url.origin,
   );
 }
 
 export async function GET(request: Request): Promise<Response> {
-  const params = new URL(request.url).searchParams;
+  const url = new URL(request.url);
+  const params = url.searchParams;
   const format = asFormat(params.get("format"));
 
   const start = parseStart(params.get("start"));
@@ -162,5 +173,6 @@ export async function GET(request: Request): Promise<Response> {
       ),
     },
     format,
+    url.origin,
   );
 }
