@@ -46,13 +46,15 @@ src/
   workout.ts                 parse Runna workout text → segments → target distance
   trailrouter.ts             Trail Router API client + best-route selection
   gpx.ts                     GeoJSON LineString → GPX 1.1 track
-  route.ts                   orchestration: text+config → { gpx, metadata }
+  route.ts                   orchestration: text+config → { gpx, coordinates, metadata }
+  preview.ts                 RouteResult → standalone Leaflet map page (format=html)
   config.ts                  types + defaults (prefs, fallback paces)
 test/
   workout.test.ts
   gpx.test.ts
   trailrouter.test.ts
-  route.test.ts              orchestration with mocked fetch
+  preview.test.ts
+  route.test.ts              orchestration + output formats, with mocked fetch
 docs/feat/route-pipeline/
   research.md  plan.md  shortcut-spec.md
 config.example.json
@@ -260,9 +262,15 @@ export async function POST(request: Request): Promise<Response>;
 - Merge `paces` over `DEFAULT_PACES`; apply `DEFAULTS` for missing prefs.
 - Call `generateRoute`; on `TrailRouterError` → 502 with `{ error, detail }`;
   on parse error → 422 `{ error, detail }`.
-- 200 → `Response.json(result)`.
+- 200 → `Response.json(result)` (the `coordinates` array is stripped from the
+  JSON body — it's only for the HTML view).
 - Also accept `GET /api/route?distanceKm=&start=lon,lat&hills=` for quick manual
   testing (thin wrapper mapping query → `generateRoute`).
+- `?format=` (query on GET or POST, or `format` in the POST body) selects the
+  output: `json` (default), `gpx` (the file, `application/gpx+xml` + download
+  disposition), or `html` (a Leaflet map page — route drawn on OpenStreetMap
+  with a distance/hilliness/climb panel, for eyeballing a route in a browser).
+  An unknown value falls back to `json`.
 
 ## Phased delivery (commit breakdown for the implementer)
 

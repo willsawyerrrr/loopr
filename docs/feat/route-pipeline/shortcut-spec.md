@@ -124,6 +124,20 @@ No Strava Premium is needed for this path (that requirement is only for attachin
 a public Strava route). The route then follows on the watch when recording via
 the Runna iOS app.
 
+### Previewing a route on a map
+
+Any request also takes `format=html`, which returns a Leaflet page showing the
+loop drawn on OpenStreetMap with a distance / hilliness / climb panel. To eyeball
+before importing:
+
+- **Manual:** open
+  `https://runna-router.willsawyerrrr.dev/api/route?distanceKm=<km>&start=<lon>,<lat>&hills=<-1..1>&format=html`
+  in a browser. Vary `hills` to compare.
+- **From the Shortcut:** duplicate step 9's request with `?format=html` on the
+  URL, then **Show Web Page** (or **Open URLs**) with the result — a quick look
+  before you switch to Runna. `format=gpx` returns the file directly if you'd
+  rather skip Save File.
+
 ### Notes
 
 - The function never throws on a checksum failure — it returns `checksum.ok:

@@ -5,16 +5,22 @@ A personal Vercel serverless function that turns the next planned run in a
 
 Given a Runna workout description (or a manual target distance) plus a small
 config, it computes the total target route distance, asks the
-[Trail Router](https://trailrouter.com) API for a matching loop, converts the
-best candidate to a GPX 1.1 track, and returns JSON:
+[Trail Router](https://trailrouter.com) API for a matching loop, picks the
+candidate closest to that distance, and converts it to a GPX 1.1 track.
+
+`GET`/`POST` `/api/route` returns JSON by default:
 
 ```json
 { "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "segments": [], "checksum": {}, "warnings": [] }
 ```
 
+`?format=gpx` returns the file directly; `?format=html` returns a Leaflet map
+page for eyeballing the route on OpenStreetMap.
+
 An iOS 26 Shortcut reads the workout from the subscribed Runna calendar, calls
-this function, saves the GPX, and hands it to the Runna app via the share sheet.
-See `docs/feat/route-pipeline/shortcut-spec.md`.
+this function, and saves the GPX to iCloud Drive; you import it in the Runna app
+(planned workout → Add Route → file picker). See
+`docs/feat/route-pipeline/shortcut-spec.md`.
 
 ## Development
 
