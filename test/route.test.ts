@@ -54,8 +54,8 @@ function stubRouter(body: unknown, init: { status?: number } = {}) {
 
 const readJson = (res: Response): Promise<any> => res.json();
 
-function postRequest(body: unknown): Request {
-  return new Request("https://runna-router.willsawyerrrr.dev/api/route", {
+function postRequest(body: unknown, query = ""): Request {
+  return new Request(`https://runna-router.willsawyerrrr.dev/api/route${query}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -196,5 +196,71 @@ describe("generateRoute — overriddenParameters surfaced", () => {
     );
     expect(result.route.overriddenParameters).toEqual({ target_distance: 2500 });
     expect(result.warnings.some((w) => w.includes("overrode"))).toBe(true);
+  });
+});
+
+describe("POST /api/route — output formats", () => {
+  it("does not leak route coordinates into the JSON body", async () => {
+    stubRouter(ROUTER_BODY);
+    const json = await readJson(
+      await POST(postRequest({ targetDistanceKm: 3.2, start: START })),
+    );
+    expect(json.coordinates).toBeUndefined();
+    expect(json.gpx).toContain("<trkpt");
+  });
+
+  it("format=gpx returns the file with a download disposition", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(
+      postRequest({ targetDistanceKm: 3.2, start: START }, "?format=gpx"),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("application/gpx+xml");
+    expect(res.headers.get("Content-Disposition")).toContain('filename="route-3.2km.gpx"');
+    expect(await res.text()).toMatch(/^<\?xml/);
+  });
+
+  it("format=html returns a Leaflet map page with the route and summary", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(
+      postRequest(
+        { workout: SAMPLE_A, title: "Walk Run", start: START },
+        "?format=html",
+      ),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
+    const html = await res.text();
+    expect(html).toContain("<title>Walk Run</title>");
+    expect(html).toContain("leaflet@1.9.4");
+    expect(html).toContain("tile.openstreetmap.org");
+    // [lon, lat] from the fixture, flipped to [lat, lon] for Leaflet
+    expect(html).toContain("[51.5074,-0.1278");
+    expect(html).toContain('"hilliness":"rolling"');
+  });
+
+  it("format also works from the POST body", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(
+      postRequest({ targetDistanceKm: 3.2, start: START, format: "gpx" }),
+    );
+    expect(res.headers.get("Content-Type")).toBe("application/gpx+xml");
+  });
+
+  it("GET format=html works too", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await GET(
+      new Request("https://x/api/route?distanceKm=3.2&start=-0.1278,51.5074&format=html"),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
+  });
+
+  it("an unknown format falls back to JSON", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(
+      postRequest({ targetDistanceKm: 3.2, start: START }, "?format=pdf"),
+    );
+    expect(res.headers.get("Content-Type")).toBe("application/json");
   });
 });
