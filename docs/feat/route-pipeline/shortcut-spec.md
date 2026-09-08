@@ -42,19 +42,29 @@ edit the values once on the device.
 1. **Get File** — Service: iCloud Drive, Path:
    `Shortcuts/runna-router-config.json`, "Show Document Picker" off.
 2. **Get Dictionary from Input** (the file contents) → `Config`.
-3. **Find Calendar Events**
+3. **Build the date window** — a run planned for today is an all-day event whose
+   start is 00:00 today, i.e. already in the past by the time the Shortcut runs,
+   so "Start Date is in the next N days" silently skips it. Anchor the window at
+   the start of today instead:
+   - **Date** → current date.
+   - **Adjust Date** → *Get Start of* → *Day* → `TodayStart`.
+   - **Adjust Date** → *Add* → `8` *Days* to `TodayStart` → `WindowEnd`.
+   (Using *start of today* rather than "now" also absorbs the UTC-vs-local
+   day-boundary offset — the Runna calendar's timezone is UTC.)
+4. **Find Calendar Events**
+   - `Start Date` `is in the range` `TodayStart` to `WindowEnd`
    - Calendar `is` `Runna`
    - `Is All Day` `is` `true`
-   - `Start Date` `is in the next` `7` `days`
    - Sort by `Start Date`, ascending; Limit `1`.
-4. **If** (there are no events) → **Show Alert** "No planned Runna run in the next
-   7 days" → **Stop Shortcut**.
-5. **Get Details of Calendar Events** → repeat for the single event, pulling:
+   This returns today's run if there is one, otherwise the next upcoming.
+5. **If** (there are no events) → **Show Alert** "No planned Runna run in the next
+   week" → **Stop Shortcut**.
+6. **Get Details of Calendar Events** → repeat for the single event, pulling:
    - `Notes` → `WorkoutText`
    - `Start Date` → `RunDate`
    - `Title` → `RunTitle`
-6. **Format Date** — `RunDate` → `yyyy-MM-dd` → `RunDateISO`.
-7. **Text** — build the request body (Dictionary action is fine; this is the
+7. **Format Date** — `RunDate` → `yyyy-MM-dd` → `RunDateISO`.
+8. **Text** — build the request body (Dictionary action is fine; this is the
    shape):
 
    ```json
@@ -71,16 +81,16 @@ edit the values once on the device.
 
    Use a **Dictionary** action so `start` stays a real array and `paces` a real
    object. `workout` is the raw multi-line Notes string.
-8. **Get Contents of URL**
+9. **Get Contents of URL**
    - URL `https://runna-router.willsawyerrrr.dev/api/route`
    - Method `POST`
-   - Request Body `JSON`, keys from the dictionary in step 7
+   - Request Body `JSON`, keys from the dictionary in step 8
    - Headers: `Content-Type: application/json`
    → response auto-parses to `Response`.
-9. **If** `Response.error` `has any value` → **Show Alert** with
-   `Response.error` + `Response.detail` → **Stop Shortcut**.
-10. **Get Dictionary Value** — `checksum.ok` from `Response` → `ChecksumOk`.
-11. **If** `ChecksumOk` `is` `false`:
+10. **If** `Response.error` `has any value` → **Show Alert** with
+    `Response.error` + `Response.detail` → **Stop Shortcut**.
+11. **Get Dictionary Value** — `checksum.ok` from `Response` → `ChecksumOk`.
+12. **If** `ChecksumOk` `is` `false`:
     - **Show Alert** — "Workout parse looks off (stated
       `Response.checksum.statedMinutes` min vs computed
       `Response.checksum.computedMinutes` min)."
@@ -89,11 +99,11 @@ edit the values once on the device.
       `{ "targetDistanceKm": <ManualKm>, "title": <RunTitle>, "date":
       <RunDateISO>, "start": …, "hillsPreference": …, "greenPreference": … }`
       → overwrite `Response`.
-12. **Get Dictionary Value** — `gpx` → `GpxText`; `filename` → `GpxName`.
-13. **Text** — `GpxText`; **Save File**
+13. **Get Dictionary Value** — `gpx` → `GpxText`; `filename` → `GpxName`.
+14. **Text** — `GpxText`; **Save File**
     - Service iCloud Drive, Destination `Shortcuts/routes/`, filename `GpxName`
     - "Ask Where to Save" off, "Overwrite If File Exists" on.
-14. **Show Notification** — title `RunTitle`, body:
+15. **Show Notification** — title `RunTitle`, body:
     "`Response.targetDistanceKm` km target → `Response.route.distanceKm` km loop,
     `Response.route.hilliness` (`Response.route.elevationGainPerKm` m/km). Saved
     as `GpxName`. `Response.warnings` joined by newline."
@@ -108,7 +118,7 @@ Confirmed: Runna's GPX import is **in-app**, not a share-sheet target.
 1. Open Runna → the planned workout → **Add Route** (the button in the workout
    action bar).
 2. Choose the GPX route option → the file picker opens on Files / iCloud Drive.
-3. Pick `Shortcuts/routes/<filename>.gpx` (where step 13 saved it).
+3. Pick `Shortcuts/routes/<filename>.gpx` (where step 14 saved it).
 
 No Strava Premium is needed for this path (that requirement is only for attaching
 a public Strava route). The route then follows on the watch when recording via
@@ -117,7 +127,7 @@ the Runna iOS app.
 ### Notes
 
 - The function never throws on a checksum failure — it returns `checksum.ok:
-  false` and the Shortcut decides (step 11).
+  false` and the Shortcut decides (step 12).
 - `warnings` is an array; show it verbatim. An "unknown run pace phrase" warning
   is the signal to run **Update Runna Paces** and add that phrase.
 - `Response.route.overriddenParameters`, when present, means Trail Router clamped
