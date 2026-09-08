@@ -209,12 +209,13 @@ describe("POST /api/route — output formats", () => {
     );
     expect(json.coordinates).toBeUndefined();
     expect(json.gpx).toContain("<trkpt");
+    // no KV store in tests → the inline-token fallback
     expect(json.previewUrl).toMatch(
       /^https:\/\/runna-router\.willsawyerrrr\.dev\/api\/preview\?r=[A-Za-z0-9_-]+$/,
     );
   });
 
-  it("previewUrl decodes back to this exact route", async () => {
+  it("the fallback previewUrl decodes back to this exact route", async () => {
     stubRouter(ROUTER_BODY);
     const json = await readJson(
       await POST(postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START })),
@@ -227,7 +228,7 @@ describe("POST /api/route — output formats", () => {
     expect(data.latlngs[0]).toEqual([51.5074, -0.1278]);
   });
 
-  it("GET /api/preview renders the map for a token, 400 on a bad one", async () => {
+  it("GET /api/preview renders the token map, and error pages are HTML not downloads", async () => {
     stubRouter(ROUTER_BODY);
     const json = await readJson(
       await POST(postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START })),
@@ -237,8 +238,18 @@ describe("POST /api/route — output formats", () => {
     expect(good.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
     expect(await good.text()).toContain("<title>Walk Run</title>");
 
-    expect((await PREVIEW(new Request("https://x/api/preview"))).status).toBe(400);
-    expect((await PREVIEW(new Request("https://x/api/preview?r=garbage"))).status).toBe(400);
+    const missing = await PREVIEW(new Request("https://x/api/preview"));
+    expect(missing.status).toBe(400);
+    expect(missing.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
+
+    const bad = await PREVIEW(new Request("https://x/api/preview?r=garbage"));
+    expect(bad.status).toBe(400);
+    expect(bad.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
+
+    // unknown store id → 404 HTML (store is off in tests, so any id misses)
+    const gone = await PREVIEW(new Request("https://x/api/preview?id=0123456789ab"));
+    expect(gone.status).toBe(404);
+    expect(gone.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
   });
 
   it("format=gpx returns the file with a download disposition", async () => {

@@ -6,6 +6,7 @@ import {
   type GenerateRouteInput,
 } from "../src/route.js";
 import { encodePreview, previewData, renderMapPage } from "../src/preview.js";
+import { putPreview } from "../src/preview-store.js";
 import { TrailRouterError } from "../src/trailrouter.js";
 
 type Format = "json" | "html" | "gpx";
@@ -87,10 +88,11 @@ async function run(
         headers: { "Content-Type": "text/html; charset=utf-8" },
       });
     }
-    return json(
-      { ...result, previewUrl: `${origin}/api/preview?r=${encodePreview(preview)}` },
-      200,
-    );
+    const id = await putPreview(preview);
+    const previewUrl = id
+      ? `${origin}/api/preview?id=${id}`
+      : `${origin}/api/preview?r=${encodePreview(preview)}`;
+    return json({ ...result, previewUrl }, 200);
   } catch (err) {
     if (err instanceof RouteInputError) return json({ error: err.message }, 400);
     if (err instanceof RouteParseError) {
