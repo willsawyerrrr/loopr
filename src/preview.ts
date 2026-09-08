@@ -1,29 +1,54 @@
+import { gunzipSync, gzipSync } from "node:zlib";
 import type { RouteResult } from "./route.js";
 
 const LEAFLET_VERSION = "1.9.4";
 
-/**
- * A standalone HTML page that draws the chosen route on an OpenStreetMap base
- * layer with a summary panel. Served for `format=html` so a route can be eyeballed
- * in a browser before importing it.
- */
-export function renderMapPage(result: RouteResult, name: string): string {
-  const latlngs = result.coordinates.map(([lon, lat]) => [lat, lon]);
-  const data = {
+export interface PreviewData {
+  name: string;
+  /** `[lat, lon]` pairs (Leaflet order). */
+  latlngs: [number, number][];
+  target: number;
+  route: RouteResult["route"];
+  warnings: string[];
+}
+
+/** Everything the map page needs, from a generated route. */
+export function previewData(result: RouteResult, name: string): PreviewData {
+  return {
     name,
-    latlngs,
+    latlngs: result.coordinates.map(([lon, lat]) => [lat, lon]),
     target: result.targetDistanceKm,
     route: result.route,
     warnings: result.warnings,
   };
-  const json = JSON.stringify(data).replace(/</g, "\\u003c");
+}
+
+/** Pack a PreviewData into a URL-safe token (gzipped JSON, base64url). */
+export function encodePreview(d: PreviewData): string {
+  return gzipSync(Buffer.from(JSON.stringify(d), "utf8")).toString("base64url");
+}
+
+/** Inverse of `encodePreview`. Throws on a malformed token. */
+export function decodePreview(token: string): PreviewData {
+  return JSON.parse(
+    gunzipSync(Buffer.from(token, "base64url")).toString("utf8"),
+  ) as PreviewData;
+}
+
+/**
+ * A standalone HTML page that draws the route on an OpenStreetMap base layer
+ * with a summary panel — served for `format=html` and for the `previewUrl`
+ * token so a route can be eyeballed in a browser before importing it.
+ */
+export function renderMapPage(d: PreviewData): string {
+  const json = JSON.stringify(d).replace(/</g, "\\u003c");
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(name)}</title>
+<title>${escapeHtml(d.name)}</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@${LEAFLET_VERSION}/dist/leaflet.css">
 <style>
   html, body { margin: 0; height: 100%; font: 14px/1.4 -apple-system, system-ui, sans-serif; }

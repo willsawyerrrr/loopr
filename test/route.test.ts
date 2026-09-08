@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { POST, GET } from "../api/route.js";
+import { GET as PREVIEW } from "../api/preview.js";
 import { generateRoute } from "../src/route.js";
+import { decodePreview } from "../src/preview.js";
 import { DEFAULT_PACES } from "../src/config.js";
 
 const START: [number, number] = [-0.1278, 51.5074];
@@ -200,13 +202,43 @@ describe("generateRoute — overriddenParameters surfaced", () => {
 });
 
 describe("POST /api/route — output formats", () => {
-  it("does not leak route coordinates into the JSON body", async () => {
+  it("returns gpx + previewUrl but not the raw coordinates", async () => {
     stubRouter(ROUTER_BODY);
     const json = await readJson(
-      await POST(postRequest({ targetDistanceKm: 3.2, start: START })),
+      await POST(postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START })),
     );
     expect(json.coordinates).toBeUndefined();
     expect(json.gpx).toContain("<trkpt");
+    expect(json.previewUrl).toMatch(
+      /^https:\/\/runna-router\.willsawyerrrr\.dev\/api\/preview\?r=[A-Za-z0-9_-]+$/,
+    );
+  });
+
+  it("previewUrl decodes back to this exact route", async () => {
+    stubRouter(ROUTER_BODY);
+    const json = await readJson(
+      await POST(postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START })),
+    );
+    const token = new URL(json.previewUrl).searchParams.get("r")!;
+    const data = decodePreview(token);
+    expect(data.name).toBe("Walk Run");
+    expect(data.route.distanceKm).toBe(json.route.distanceKm);
+    // the 3180 m fixture candidate's first point, [lon,lat,ele] flipped to [lat,lon]
+    expect(data.latlngs[0]).toEqual([51.5074, -0.1278]);
+  });
+
+  it("GET /api/preview renders the map for a token, 400 on a bad one", async () => {
+    stubRouter(ROUTER_BODY);
+    const json = await readJson(
+      await POST(postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START })),
+    );
+    const good = await PREVIEW(new Request(json.previewUrl));
+    expect(good.status).toBe(200);
+    expect(good.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
+    expect(await good.text()).toContain("<title>Walk Run</title>");
+
+    expect((await PREVIEW(new Request("https://x/api/preview"))).status).toBe(400);
+    expect((await PREVIEW(new Request("https://x/api/preview?r=garbage"))).status).toBe(400);
   });
 
   it("format=gpx returns the file with a download disposition", async () => {
