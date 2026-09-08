@@ -14,6 +14,8 @@ function hilliness(gainPerKm: number): Hilliness {
 
 export interface RouteResult {
   gpx: string;
+  /** The chosen route's `[lon, lat, ele?]` points. Not part of the JSON response. */
+  coordinates: [number, number, number?][];
   /** e.g. `2026-09-13-walk-run-3.2km.gpx`. */
   filename: string;
   targetDistanceKm: number;
@@ -149,6 +151,7 @@ export async function generateRoute(
 
   return {
     gpx: lineStringToGpx(best.coordinates, name),
+    coordinates: best.coordinates,
     filename,
     targetDistanceKm: round2(targetMeters / 1000),
     route: {

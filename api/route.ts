@@ -5,7 +5,14 @@ import {
   RouteParseError,
   type GenerateRouteInput,
 } from "../src/route.js";
+import { renderMapPage } from "../src/preview.js";
 import { TrailRouterError } from "../src/trailrouter.js";
+
+type Format = "json" | "html" | "gpx";
+
+function asFormat(value: string | null | undefined): Format {
+  return value === "html" || value === "gpx" ? value : "json";
+}
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -55,9 +62,27 @@ function buildConfig(
   };
 }
 
-async function run(input: GenerateRouteInput): Promise<Response> {
+async function run(input: GenerateRouteInput, format: Format): Promise<Response> {
   try {
-    return json(await generateRoute(input), 200);
+    const { coordinates, ...result } = await generateRoute(input);
+
+    if (format === "gpx") {
+      return new Response(result.gpx, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/gpx+xml",
+          "Content-Disposition": `attachment; filename="${result.filename}"`,
+        },
+      });
+    }
+    if (format === "html") {
+      const name = input.title?.trim() || "Runna route";
+      return new Response(renderMapPage({ ...result, coordinates }, name), {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+    return json(result, 200);
   } catch (err) {
     if (err instanceof RouteInputError) return json({ error: err.message }, 400);
     if (err instanceof RouteParseError) {
@@ -78,6 +103,11 @@ export async function POST(request: Request): Promise<Response> {
     return json({ error: "Invalid JSON body" }, 400);
   }
 
+  const format = asFormat(
+    new URL(request.url).searchParams.get("format") ??
+      (typeof body["format"] === "string" ? body["format"] : null),
+  );
+
   const start = parseStart(body["start"]);
   if (!start) return json({ error: "`start` must be `[lon, lat]`" }, 400);
 
@@ -90,22 +120,26 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  return run({
-    ...(hasWorkout ? { workout: body["workout"] as string } : {}),
-    ...(hasManual ? { targetDistanceKm: body["targetDistanceKm"] as number } : {}),
-    ...(typeof body["title"] === "string" ? { title: body["title"] } : {}),
-    ...(typeof body["date"] === "string" ? { date: body["date"] } : {}),
-    config: buildConfig(
-      start,
-      body["hillsPreference"],
-      body["greenPreference"],
-      body["paces"],
-    ),
-  });
+  return run(
+    {
+      ...(hasWorkout ? { workout: body["workout"] as string } : {}),
+      ...(hasManual ? { targetDistanceKm: body["targetDistanceKm"] as number } : {}),
+      ...(typeof body["title"] === "string" ? { title: body["title"] } : {}),
+      ...(typeof body["date"] === "string" ? { date: body["date"] } : {}),
+      config: buildConfig(
+        start,
+        body["hillsPreference"],
+        body["greenPreference"],
+        body["paces"],
+      ),
+    },
+    format,
+  );
 }
 
 export async function GET(request: Request): Promise<Response> {
   const params = new URL(request.url).searchParams;
+  const format = asFormat(params.get("format"));
 
   const start = parseStart(params.get("start"));
   if (!start) return json({ error: "`start` query param must be `lon,lat`" }, 400);
@@ -115,15 +149,18 @@ export async function GET(request: Request): Promise<Response> {
     return json({ error: "`distanceKm` query param must be a positive number" }, 400);
   }
 
-  return run({
-    targetDistanceKm: distanceKm,
-    ...(params.get("title") ? { title: params.get("title")! } : {}),
-    ...(params.get("date") ? { date: params.get("date")! } : {}),
-    config: buildConfig(
-      start,
-      params.has("hills") ? Number(params.get("hills")) : undefined,
-      params.has("green") ? Number(params.get("green")) : undefined,
-      undefined,
-    ),
-  });
+  return run(
+    {
+      targetDistanceKm: distanceKm,
+      ...(params.get("title") ? { title: params.get("title")! } : {}),
+      ...(params.get("date") ? { date: params.get("date")! } : {}),
+      config: buildConfig(
+        start,
+        params.has("hills") ? Number(params.get("hills")) : undefined,
+        params.has("green") ? Number(params.get("green")) : undefined,
+        undefined,
+      ),
+    },
+    format,
+  );
 }
