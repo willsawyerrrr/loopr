@@ -14,9 +14,10 @@ candidate closest to that distance, and converts it to a GPX 1.1 track.
 { "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "segments": [], "checksum": {}, "warnings": [] }
 ```
 
-The response also carries a `previewUrl` — a link to a Leaflet map of that exact
-route on OpenStreetMap. `?format=gpx` returns the file directly; `?format=html`
-returns the same map page rendered from a fresh route.
+The response also carries a `previewUrl` — a short link
+(`/api/preview?id=…`, backed by a KV store, 30-day expiry) to a Leaflet map of
+that exact route on OpenStreetMap. `?format=gpx` returns the file directly;
+`?format=html` returns the same map page rendered from a fresh route.
 
 An iOS 26 Shortcut reads the workout from the subscribed Runna calendar, calls
 this function, and saves the GPX to iCloud Drive; you import it in the Runna app
@@ -30,6 +31,10 @@ npm install
 npm test          # vitest
 npm run typecheck # tsc --noEmit
 ```
+
+The short `previewUrl` needs a Redis-compatible KV store — add **Upstash for
+Redis** (free) from the Vercel dashboard and connect it to the project. Without
+it the code falls back to a long inline preview link.
 
 ## Attribution
 

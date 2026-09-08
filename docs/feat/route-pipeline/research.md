@@ -184,7 +184,15 @@ regardless, so full unattended operation is not the goal.
 ### 4. Vercel
 
 - Functions at `api/route.ts` (the pipeline) and `api/preview.ts` (renders a
-  `previewUrl` map token). No `vercel.json` needed.
+  `previewUrl`). No `vercel.json` needed.
+- **Preview store (key-value):** the short `previewUrl` (`?id=<12 hex>`) needs a
+  Redis-compatible KV store. Add **Upstash for Redis** from the Vercel
+  dashboard → Storage → Create Database → free plan → connect to the
+  `runna-router` project; it injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`
+  (also read as `UPSTASH_REDIS_REST_URL` / `_TOKEN`). Client: `@upstash/redis`.
+  Keys `preview:<id>` with a 30-day TTL. The code degrades to the inline
+  `?r=<token>` link when the store env vars are absent, so deploying before the
+  store is connected is safe.
 - Handler: Web-standard `export function POST(request: Request)` returning
   `Response.json(...)`, or the Node `VercelRequest`/`VercelResponse` signature.
 - TypeScript transpiled automatically (esbuild); root `tsconfig.json` honoured

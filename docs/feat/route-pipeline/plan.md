@@ -31,7 +31,7 @@ iOS 26 Shortcut "Runna Route"
         ▼
   Get Dictionary Value → gpx, checksum.ok, targetDistanceKm, route.distanceKm, previewUrl
   If checksum.ok == false → Ask for Input (manual km) → re-POST { targetDistanceKm, ... }
-  (optional) Show Web Page → previewUrl  — map of this exact route
+  (optional) Show Web Page → previewUrl  — short link, map of this exact route
   Save File → iCloud Drive / Shortcuts / <filename>
   Show notification (distance, hilliness, warnings)
   Import into Runna manually: workout → Add Route → file picker
@@ -43,13 +43,14 @@ Companion Shortcut **"Update Runna Paces"** edits `runna-router-config.json`.
 
 ```
 api/route.ts                 Vercel function — the pipeline (thin wrapper over src/)
-api/preview.ts               Vercel function — renders a previewUrl token as a map page
+api/preview.ts               Vercel function — renders a previewUrl (?id= store, ?r= token)
 src/
   workout.ts                 parse Runna workout text → segments → target distance
   trailrouter.ts             Trail Router API client + best-route selection
   gpx.ts                     GeoJSON LineString → GPX 1.1 track
   route.ts                   orchestration: text+config → { gpx, coordinates, metadata }
-  preview.ts                 PreviewData: map-page HTML + encode/decode the previewUrl token
+  preview.ts                 PreviewData: map-page HTML + encode/decode the inline token
+  preview-store.ts           put/get a PreviewData by short id in the KV store (Upstash Redis)
   config.ts                  types + defaults (prefs, fallback paces)
 test/
   workout.test.ts
@@ -265,8 +266,9 @@ export async function POST(request: Request): Promise<Response>;
 - Call `generateRoute`; on `TrailRouterError` → 502 with `{ error, detail }`;
   on parse error → 422 `{ error, detail }`.
 - 200 → `Response.json({ ...result, previewUrl })`. The `coordinates` array is
-  stripped from the body; `previewUrl` is `<origin>/api/preview?r=<token>` where
-  the token is the gzipped-base64url `PreviewData` for this exact route.
+  stripped from the body. `previewUrl` is `<origin>/api/preview?id=<12 hex>` when
+  the KV store accepted the write, else `<origin>/api/preview?r=<token>` (the
+  gzipped-base64url `PreviewData`). `putPreview` never throws.
 - Also accept `GET /api/route?distanceKm=&start=lon,lat&hills=` for quick manual
   testing (thin wrapper mapping query → `generateRoute`).
 - `?format=` (query on GET or POST, or `format` in the POST body) selects the
@@ -281,9 +283,10 @@ export async function POST(request: Request): Promise<Response>;
 export async function GET(request: Request): Promise<Response>;
 ```
 
-- `?r=<token>` → `decodePreview` → `renderMapPage` → `text/html`.
-- 400 on a missing or malformed token. No Trail Router call — the token holds
-  the geometry, so this renders exactly the route `/api/route` returned.
+- `?id=<hex>` → `getPreview` (KV lookup) → `renderMapPage`; a miss/expiry → a
+  404 **HTML** page. `?r=<token>` → `decodePreview` → `renderMapPage`; malformed
+  → a 400 **HTML** page. No Trail Router call either way. Errors are HTML (not
+  bare text) so a browser renders them instead of offering a download.
 
 ## Phased delivery (commit breakdown for the implementer)
 

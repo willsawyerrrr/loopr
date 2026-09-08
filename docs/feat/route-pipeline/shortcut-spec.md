@@ -126,10 +126,13 @@ the Runna iOS app.
 
 ### Previewing a route on a map
 
-The JSON response carries a **`previewUrl`** — a link to a Leaflet page showing
-*this exact* route (its geometry is packed into the link, so opening it makes no
-second Trail Router call) on OpenStreetMap with a distance / hilliness / climb
-panel and any warnings.
+The JSON response carries a **`previewUrl`** — a short link
+(`…/api/preview?id=<12 hex>`) to a Leaflet page showing *this exact* route on
+OpenStreetMap with a distance / hilliness / climb panel and any warnings.
+Opening it makes no second Trail Router call. The link is backed by a key-value
+store and expires after 30 days (see `research.md` §4 for the store setup). If
+the store is not configured the link falls back to an inline `?r=<token>` form
+that carries the geometry itself — same page, just a long URL.
 
 - **From the Shortcut:** after step 12, add **Show Web Page** with
   `Response.previewUrl` — an in-app look you dismiss back to the Shortcut. Wrap it
