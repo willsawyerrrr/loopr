@@ -113,7 +113,13 @@ describe("POST /api/route — manual override path", () => {
     expect(res.status).toBe(200);
     const json = await readJson(res);
     expect(json.segments).toEqual([]);
-    expect(json.checksum).toEqual({ statedMinutes: null, computedMinutes: 0, ok: true });
+    expect(json.checksum).toEqual({
+      statedMinutes: null,
+      statedKm: null,
+      computedMinutes: 0,
+      computedKm: 0,
+      ok: true,
+    });
     expect(json.filename).toBe("route-3.2km.gpx");
     expect(json.targetDistanceKm).toBe(3.2);
   });

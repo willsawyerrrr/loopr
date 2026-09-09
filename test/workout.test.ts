@@ -138,6 +138,78 @@ describe("parseWorkout — checksum mismatch", () => {
   });
 });
 
+describe("parseWorkout — 5km time trial (distance phase)", () => {
+  const PACES = { walking: 10.0, "conversational pace": 5.333 };
+  const TT = `Time Trial • 6km • 25-35m
+
+1km at a conversational pace
+
+120s walking rest
+
+5km time trial at 4:25/km`;
+  const parsed = parseWorkout(TT, PACES);
+
+  it("keeps the 5 km session segment even though 'time trial' is not a known phrase", () => {
+    const distances = parsed.segments
+      .filter((s) => s.source === "distance")
+      .map((s) => s.meters);
+    expect(distances).toContain(5000);
+    expect(distances).toContain(1000);
+  });
+
+  it("reads the explicit 4:25/km pace from the text", () => {
+    const session = parsed.segments.find((s) => s.meters === 5000)!;
+    expect(session.activity).toBe("run");
+    expect(session.paceMinPerKm).toBeCloseTo(4 + 25 / 60, 3);
+  });
+
+  it("totals ~6.2 km (1 km + 200 m walk + 5 km)", () => {
+    expect(parsed.targetDistanceMeters).toBeGreaterThan(6100);
+    expect(parsed.targetDistanceMeters).toBeLessThan(6300);
+  });
+
+  it("passes both the stated-km and stated-minutes checks", () => {
+    expect(parsed.checksum.statedKm).toBe(6);
+    expect(parsed.checksum.statedMinutes).toBe(30); // midpoint of 25-35
+    expect(parsed.checksum.computedKm).toBeGreaterThan(6.1);
+    expect(parsed.checksum.ok).toBe(true);
+  });
+
+  it("has no warnings — every pace is configured or in the text", () => {
+    expect(parsed.warnings).toEqual([]);
+  });
+});
+
+describe("parseWorkout — distance segment with an unknown pace", () => {
+  const parsed = parseWorkout(
+    `5km Time Trial\n\n5km time trial`,
+    DEFAULT_PACES,
+  );
+
+  it("still counts the distance, and warns about the pace", () => {
+    expect(parsed.targetDistanceMeters).toBe(5000);
+    expect(parsed.warnings.some((w) => w.includes("fallback"))).toBe(true);
+  });
+
+  it("suppresses the minutes check when a pace was guessed", () => {
+    // no stated minutes here anyway, but the flag path is what matters
+    expect(parsed.checksum.ok).toBe(true);
+  });
+});
+
+describe("parseWorkout — 'No faster than' cue lines are ignored", () => {
+  const parsed = parseWorkout(
+    `Easy Run • 5km\n\n5km at a conversational pace\nNo faster than 5:35/km`,
+    DEFAULT_PACES,
+  );
+
+  it("produces exactly one segment", () => {
+    expect(parsed.segments).toHaveLength(1);
+    expect(parsed.segments[0]!.meters).toBe(5000);
+    expect(parsed.warnings).toEqual([]);
+  });
+});
+
 describe("parseWorkout — empty input", () => {
   it("returns no segments and warns", () => {
     const parsed = parseWorkout("", DEFAULT_PACES);
