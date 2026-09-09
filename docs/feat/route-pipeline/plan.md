@@ -354,5 +354,6 @@ here; the Shortcut sends the device's current location per request.
 
 **Non-goals for v1:** custom routing engine; Runna private API; automated GPX
 *import* into Runna (stays a manual in-app step); Garmin support (same GPX,
-loaded into Garmin Connect directly); response caching; scheduled/automated
-runs. The start point is the caller's current location — no saved start points.
+loaded into Garmin Connect directly); response caching. Scheduling is just a
+single iOS Time-of-Day automation running the Shortcut. The start point is the
+caller's current location — no saved start points.
