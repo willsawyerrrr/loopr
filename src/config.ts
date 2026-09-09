@@ -1,5 +1,5 @@
 export interface RouteConfig {
-  /** Home start point as `[lon, lat]`. Personal; supplied per request, never committed. */
+  /** Route start as `[lon, lat]`. Supplied per request (the Shortcut sends the device's current location); never stored. */
   start: [number, number];
   /** Trail Router hills preference, -1..1. Defaults to `DEFAULTS.hillsPreference`. */
   hillsPreference?: number;
