@@ -39,12 +39,20 @@ function that holds all real logic.
 
 - Sections: `Warm-Up` / `Repeat xN` (aka `N reps of:`) / `Session` / `Cool Down`.
 - Each segment has **either** a duration (`60s`, `2 mins`, `5 mins`) **or** a
-  distance (`750m`, later likely `5km`), plus an activity (WALK / RUN) inferred
-  from phrases: `walking` → walk; `conversational pace` → run. More pace phrases
-  (`easy pace`, `tempo`, `5k pace`, …) appear as the plan progresses.
+  distance (`750m`, `1km`, `5km`), plus an activity (WALK / RUN).
+- Activity / pace, in order: an **explicit pace in the text** (`5km time trial at
+  4:25/km`) wins; else `walking` / `rest` → walk; else a configured pace phrase
+  (`conversational pace`, and `easy pace` / `tempo` / `5k pace` … as they
+  appear) → run at that pace; else → run at the fallback pace with a warning.
+  Words like `time trial`, `tempo`, `threshold`, `strides` don't name a pace, so
+  those segments would previously be dropped — now a **distance** segment always
+  counts (the km is literal) even when the pace was guessed.
 - A `•` bullet line can hold two comma-separated segments
   (`2 mins at a conversational pace, 60s walking`).
-- `• 29m` in the title/description is a total-duration checksum for the parse.
+- The title line — `Type • field • field`, or a bare workout name like `5km Time
+  Trial` — carries the checksums: `• 29m` / `• 25-35m` → stated minutes;
+  `• 6km` → stated km. Distance-phase workouts tend to carry the km, not a
+  single minute figure.
 - Footer `📲 View in the Runna app: …/workout?dayId=..._plan_week_3_WALK_RUN_0&weekIndex=3`
   — `dayId`/`weekIndex` are a stable per-workout id if ever needed.
 
@@ -67,6 +75,12 @@ Walk Run • 29m • 29m
 Sample B — "Your First Continuous Run", calendar summary a bare `🏃 Easy Run`:
 Warm-Up `5 mins walking warm up` (WALK); Session `750m at a conversational pace`
 (RUN); Cool Down `5 mins walking cool down` (WALK).
+
+Sample C — "5km Time Trial", app shows `Time Trial · 6km` / `25m - 35m`:
+Warm-Up `1km at a conversational pace` (RUN) + `120s walking rest` (WALK);
+Session `5km time trial at 4:25/km` (RUN). Total ≈ 6.2 km (the app's "6km"
+ignores the walk rest). No `run`/pace-phrase keyword on the session line — the
+parser takes the distance literally and the pace from `at 4:25/km`.
 
 ### 2. Trail Router API
 
@@ -268,10 +282,12 @@ regardless, so full unattended operation is not the goal.
    documented `User-Agent` expectation.
 6. **`overriddenParameters`** — when/why the backend clamps request params is
    undocumented; the function should surface it.
-7. **Pace phrase coverage** — only `walking` and `conversational pace` seen so
-   far. Full vocabulary (`easy pace`, `steady`, `tempo`, `threshold`, `5k pace`,
-   `10k pace`, `marathon pace`, `strides`, …) and default min/km values get built
-   up over time; unknown phrase must fail loudly / surface a warning.
+7. **Pace phrase coverage** — `walking`, `conversational pace`, and explicit
+   `M:SS/km` specs seen so far. The rest of the vocabulary (`easy pace`,
+   `steady`, `tempo`, `threshold`, `5k pace`, `10k pace`, `marathon pace`,
+   `strides`, …) and its min/km values get added to the config over time; an
+   unknown phrase surfaces a warning and falls back, but the segment's distance
+   still counts.
 8. **watchOS build** the user is on (needs ≥ 11 for map display; 26 assumed).
 
 ## Assumptions
@@ -299,8 +315,9 @@ regardless, so full unattended operation is not the goal.
    planned workout via the in-app **Add Route** picker, and displays it on
    watchOS ≥ 11 when recording via the iOS app. Garmin support is out of scope
    for v1 (same GPX loads into Garmin Connect directly).
-8. Regex parsing of the workout description is primary; the `• NNm` checksum
-   validates each parse; `Use Model` is a possible future fallback, not v1.
+8. Regex parsing of the workout description is primary; the header's `• NNm` /
+   `• NNkm` figures validate each parse (km check for the distance phase, minutes
+   check while paces are known); `Use Model` is a possible future fallback, not v1.
 9. Node 22.x on Vercel; `api/route.ts` with a Web-standard handler; no
    `vercel.json` unless headers/routing need tuning.
 10. No OSM/Trail Router attribution legally required; courtesy credit in README +

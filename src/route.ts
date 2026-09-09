@@ -75,7 +75,9 @@ function slug(value: string): string {
 
 const EMPTY_CHECKSUM: ParsedWorkout["checksum"] = {
   statedMinutes: null,
+  statedKm: null,
   computedMinutes: 0,
+  computedKm: 0,
   ok: true,
 };
 

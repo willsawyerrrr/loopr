@@ -26,7 +26,13 @@ const RESULT: RouteResult = {
     greenScore: 0.4,
   },
   segments: [],
-  checksum: { statedMinutes: null, computedMinutes: 0, ok: true },
+  checksum: {
+    statedMinutes: null,
+    statedKm: null,
+    computedMinutes: 0,
+    computedKm: 0,
+    ok: true,
+  },
   warnings: ['Trail Router overrode parameters: {"avoidRepetition":false}'],
 };
 

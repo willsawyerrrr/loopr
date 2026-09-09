@@ -97,9 +97,11 @@ order). The Shortcut needs Location access; grant it on first run.
     `Response.error` + `Response.detail` → **Stop Shortcut**.
 11. **Get Dictionary Value** — `checksum.ok` from `Response` → `ChecksumOk`.
 12. **If** `ChecksumOk` `is` `false`:
-    - **Show Alert** — "Workout parse looks off (stated
-      `Response.checksum.statedMinutes` min vs computed
-      `Response.checksum.computedMinutes` min)."
+    - **Show Alert** — "Workout parse looks off. Stated
+      `Response.checksum.statedKm` km / `Response.checksum.statedMinutes` min vs
+      computed `Response.checksum.computedKm` km /
+      `Response.checksum.computedMinutes` min." (Either stated field can be
+      empty — show what's there.)
     - **Ask for Input** — Number, "Target distance in km?" → `ManualKm`
     - **Get Contents of URL** — same URL/method, body
       `{ "targetDistanceKm": <ManualKm>, "title": <RunTitle>, "date":

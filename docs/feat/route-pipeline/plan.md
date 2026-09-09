@@ -111,6 +111,7 @@ export interface Segment {
   seconds?: number;                 // when source === "duration"
   meters?: number;                  // when source === "distance"
   distanceMeters: number;           // resolved distance for this segment
+  paceMinPerKm: number;             // pace used to resolve it (and the checksum)
   phrase?: string;                  // matched pace phrase, if any
   reps: number;                     // expansion factor already applied === 1
 }
@@ -119,11 +120,13 @@ export interface ParsedWorkout {
   segments: Segment[];
   targetDistanceMeters: number;     // Σ segment.distanceMeters
   checksum: {
-    statedMinutes: number | null;   // from "• NNm", null if absent
+    statedMinutes: number | null;   // header "• NNm" / midpoint of "• NN-NNm"
+    statedKm: number | null;        // header "• NNkm"
     computedMinutes: number;        // Σ durations + Σ (distance ÷ pace)
-    ok: boolean;                    // |stated - computed| <= 2, or stated null
+    computedKm: number;             // targetDistanceMeters / 1000
+    ok: boolean;
   };
-  warnings: string[];               // unknown phrases, unparsed lines, etc.
+  warnings: string[];               // unknown paces, unparsed lines, etc.
 }
 
 export function parseWorkout(
@@ -135,29 +138,37 @@ export function parseWorkout(
 
 Parsing rules:
 
-1. Normalise: split on newlines, trim, drop empty lines for structure but track
-   blank lines as `Repeat` block terminators.
+1. Normalise: split on newlines, trim; blank lines terminate a `Repeat` block.
 2. Ignore lines: `View in the Runna app`, `📊 Summary`, `Distance: …`,
-   `Time: …`, `Avg Pace: …`, lap lines. Capture `•\s*(\d+)\s*m\b` on the first
-   header line (`Walk Run • 29m • 29m`) as `statedMinutes`.
-3. Section headers (`Warm-Up`, `Session`, `Cool Down`, `Warm Up`) — skip, no
-   value.
-4. Repeat markers: `^(?:Repeat\s*[x×]\s*(\d+)|(\d+)\s*reps? of:?)` → the
-   following `•` lines repeat N times until a blank line or the next
-   section/repeat header. Emit each expanded segment individually with `reps: 1`.
-5. Segment line → split on `,` into parts; each part:
+   `Time: …`, `Avg Pace: …`, lap lines, `No faster/slower than …`, `Aim for/to …`.
+3. First line is a **title** (skipped) when it uses the `Type • field • field`
+   format (` • ` separator) or names a workout type (`5km Time Trial`, `Easy
+   Run`, …) without reading like a segment. From it, capture
+   `•\s*(\d+)(?:-\s*(\d+))?\s*m\b` → `statedMinutes` (range → midpoint) and
+   `•\s*(\d+(?:\.\d+)?)\s*km\b` → `statedKm`.
+4. Section headers (`Warm-Up`, `Session`, `Cool Down`) — skip.
+5. Repeat markers: `^(?:Repeat\s*[x×]\s*(\d+)|(\d+)\s*reps? of:?)` → the
+   following `•` lines repeat N times until a blank line or next section/repeat
+   header. Emit each expanded segment with `reps: 1`.
+6. Segment line → split on `,` into parts; each part:
    - duration: `(\d+)\s*s\b` → seconds; `(\d+)\s*min(?:s|utes?)?\b` → minutes×60.
-   - distance: `(\d+(?:\.\d+)?)\s*km\b` → ×1000 m; `(\d+)\s*m\b` (not `min`) → m.
-     Match `min` before bare `m`.
-   - activity: contains `walk` → `walk` (pace = `paces.walking`); else the first
-     known pace phrase found in the part → `run` with that pace; else contains
-     `run`/`jog` → `run` with `fallbackRunPaceMinPerKm` + warning; else →
-     warning, skip the part.
-   - resolve `distanceMeters`: `meters` directly, or
-     `(seconds/60) / paceMinPerKm * 1000`.
-6. `targetDistanceMeters` = Σ. `computedMinutes` = Σ durations(min) +
-   Σ (segmentDistanceKm × paceMinPerKm for distance segments).
-7. `checksum.ok` = `statedMinutes == null || abs(stated - computed) <= 2`.
+   - distance: `(\d+(?:\.\d+)?)\s*km\b` → ×1000 m; else `(\d+)\s*m\b` → m.
+   - a part with **no** duration or distance token is not a segment (skipped).
+   - pace / activity (`classify`): explicit `M:SS/km` in the text wins; else
+     `walk`/`rest` → walk at `paces.walking`; else a known pace phrase → run at
+     its pace; else → **run at `fallbackRunPaceMinPerKm` + warning** (marked as a
+     guessed pace).
+   - `distanceMeters`: `meters` directly, or `(seconds/60) / paceMinPerKm × 1000`.
+     A **distance** segment always counts even when the pace/activity was a
+     guess — the km is stated literally.
+7. `targetDistanceMeters` / `computedKm` = Σ. `computedMinutes` = Σ durations +
+   Σ (distanceKm × paceMinPerKm).
+8. `checksum.ok` = `kmOk && minutesOk` where
+   `kmOk` = `statedKm == null || |statedKm − computedKm| ≤ max(1, 0.15·statedKm)`
+   and `minutesOk` = `statedMinutes == null || anyGuessedPace ||
+   |statedMinutes − computedMinutes| ≤ 3`. The minutes check is suppressed once
+   any pace was guessed, since the minute total is then unreliable while the
+   distance total (from literal `Nkm`/`Nm`) stays trustworthy.
 
 ### `src/trailrouter.ts`
 
@@ -299,7 +310,9 @@ export async function GET(request: Request): Promise<Response>;
    `test/workout.test.ts`. Tests cover Sample A (16 min walk / 13 min run →
    ~3.2 km at default paces, checksum ok), Sample B (5 min walk + 750 m + 5 min
    walk → ~1.65 km), comma-split parts, `reps of:` expansion, unknown phrase →
-   warning + fallback, bare title / no description → caller uses override path.
+   warning + fallback, bare title / no description → caller uses override path,
+   and the distance phase (a 5 km time trial: `time trial` + `4:25/km` → the
+   5 km segment still counts; km checksum).
 3. **`feat: Add GeoJSON to GPX converter`** — `src/gpx.ts` +
    `test/gpx.test.ts` (coordinate swap, XML escaping, well-formed output,
    single trkseg).
