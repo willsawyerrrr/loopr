@@ -5,8 +5,10 @@ Two Shortcuts drive the pipeline from the phone:
 - **Runna Route** — the daily/on-demand generator.
 - **Update Runna Paces** — a small editor for the config file.
 
-Both read and write a single JSON config file in iCloud Drive so the personal
-data (home start point, pace table) never lives in the repo or the function.
+Both read and write a single JSON config file in iCloud Drive so the pace table
+and preferences never live in the repo or the function. The route's start point
+is the device's **current location**, taken fresh on each run — so routes
+generate wherever you set off, not only at home.
 
 ## Config file
 
@@ -15,7 +17,6 @@ data (home start point, pace table) never lives in the repo or the function.
 
 ```json
 {
-  "start": [-0.1278, 51.5074],
   "hillsPreference": 0.0,
   "greenPreference": 0.0,
   "paces": {
@@ -27,13 +28,15 @@ data (home start point, pace table) never lives in the repo or the function.
 
 | Key | Type | Meaning |
 |---|---|---|
-| `start` | `[lon, lat]` | Home start point. **Longitude first** (GeoJSON order), matching the function and Trail Router. |
 | `hillsPreference` | number, `-1`..`1` | `-1` avoid hills, `0` neutral, `1` prefer. |
 | `greenPreference` | number, `0`..`1` | `0` no preference, `1` maximally green. |
 | `paces` | object | Lowercased Runna pace phrase → minutes per km. Add a row whenever the function returns an "unknown run pace phrase" warning. |
 
 `config.example.json` in the repo is the template; copy it into iCloud Drive and
 edit the values once on the device.
+
+The `start` sent to `/api/route` is `[lon, lat]` (longitude first, GeoJSON
+order). The Shortcut needs Location access; grant it on first run.
 
 ## Shortcut 1 — "Runna Route"
 
@@ -64,20 +67,23 @@ edit the values once on the device.
    - `Start Date` → `RunDate`
    - `Title` → `RunTitle`
 7. **Format Date** — `RunDate` → `yyyy-MM-dd` → `RunDateISO`.
-8. **Text** — build the request body (Dictionary action is fine; this is the
-   shape):
+8. **Build the request body:**
+   - **Get Current Location**, then **Get Details of Location** twice for
+     `Longitude` and `Latitude`; assemble a **List** `[Longitude, Latitude]`
+     (longitude first) → `Start`.
+   - **Dictionary** action:
 
-   ```json
-   {
-     "workout": "<WorkoutText>",
-     "title": "<RunTitle>",
-     "date": "<RunDateISO>",
-     "start": <Config.start>,
-     "hillsPreference": <Config.hillsPreference>,
-     "greenPreference": <Config.greenPreference>,
-     "paces": <Config.paces>
-   }
-   ```
+     ```json
+     {
+       "workout": "<WorkoutText>",
+       "title": "<RunTitle>",
+       "date": "<RunDateISO>",
+       "start": <Start>,
+       "hillsPreference": <Config.hillsPreference>,
+       "greenPreference": <Config.greenPreference>,
+       "paces": <Config.paces>
+     }
+     ```
 
    Use a **Dictionary** action so `start` stays a real array and `paces` a real
    object. `workout` is the raw multi-line Notes string.
@@ -97,7 +103,8 @@ edit the values once on the device.
     - **Ask for Input** — Number, "Target distance in km?" → `ManualKm`
     - **Get Contents of URL** — same URL/method, body
       `{ "targetDistanceKm": <ManualKm>, "title": <RunTitle>, "date":
-      <RunDateISO>, "start": …, "hillsPreference": …, "greenPreference": … }`
+      <RunDateISO>, "start": <Start>, "hillsPreference": <Config.hillsPreference>,
+      "greenPreference": <Config.greenPreference> }`
       → overwrite `Response`.
 13. **Get Dictionary Value** — `gpx` → `GpxText`; `filename` → `GpxName`.
 14. **Text** — `GpxText`; **Save File**
@@ -180,24 +187,22 @@ JSON by hand.
    "Overwrite If File Exists" on.
 10. **Show Notification** — "Saved `PhraseKey` = `MinPerKm` min/km".
 
-To edit `start`, `hillsPreference`, or `greenPreference`, extend this Shortcut
-with the same **Ask for Input → Set Dictionary Value → Save File** pattern, or
-edit the JSON file directly in the Files app.
+To edit `hillsPreference` or `greenPreference`, extend this Shortcut with the
+same **Ask for Input → Set Dictionary Value → Save File** pattern, or edit the
+JSON file directly in the Files app.
 
-## Automation — daily unattended run
+## Running it
 
-- **Shortcuts → Automation → New → Time of Day**
-  - Time: e.g. 05:30
-  - Repeat: Daily
-  - **Run Immediately** (no "Run After Confirmation")
-- Action: **Run Shortcut → Runna Route**.
+Run "Runna Route" **when and where you set off** — the route starts from your
+current location, so a fixed morning schedule only makes sense if you always
+start from home. Put the Shortcut on the Home Screen / in the widget for a
+one-tap launch before a run.
 
-Caveat: since iOS 17 (unchanged through iOS 26) a "Run Immediately" automation
-fires with no confirmation tap, **but Apple always shows an unsuppressable
-notification banner** while it runs. Importing the GPX is a manual in-app step in
-Runna regardless, so the pipeline is "generate overnight, import in the morning",
-not fully hands-off. Treat the automation as a prompt to open Runna and pull in
-the freshly saved route.
+A Time-of-Day automation (**Shortcuts → Automation → Time of Day → Run
+Immediately**) is possible but of limited use here: it would capture wherever
+the phone is at that minute, and Apple forces an unsuppressable notification
+banner on "Run Immediately" automations anyway. Importing the GPX into Runna is
+a manual in-app step regardless.
 
 ## Manual verification checklist (out of band)
 

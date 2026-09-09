@@ -305,10 +305,12 @@ regardless, so full unattended operation is not the goal.
    `vercel.json` unless headers/routing need tuning.
 10. No OSM/Trail Router attribution legally required; courtesy credit in README +
     GPX `creator`.
-11. Home start point, `hills_preference` (0.0) and `green_preference` (0.0) live
-    in the Shortcut's iCloud config file and are passed to the function per
-    request; `roundtrip=true`, `avoid_repetition=true`, `avoid_unsafe_streets=true`,
-    `avoid_unlit_streets=true` are sensible defaults.
+11. `start` is the device's current location, captured by the Shortcut on each
+    run (routes generate wherever you set off). `hills_preference` (0.0) and
+    `green_preference` (0.0) live in the Shortcut's iCloud config file; all three
+    are passed to the function per request. `roundtrip=true`,
+    `avoid_repetition=true`, `avoid_unsafe_streets=true`, `avoid_unlit_streets=true`
+    are sensible defaults.
 
 ## Sources
 

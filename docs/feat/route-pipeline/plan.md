@@ -15,7 +15,8 @@ user on their iPhone to import into Runna manually.
 iOS 26 Shortcut "Runna Route"
   Find Calendar Events (Runna cal, all-day, start of today → +8 days)
   Get Details → Notes (workout text) + Start Date + Title
-  Get File → runna-router-config.json (iCloud Drive)
+  Get File → runna-router-config.json (iCloud Drive)   — paces + preferences
+  Get Current Location → [lon, lat]
   POST https://runna-router.willsawyerrrr.dev/api/route
        { workout, paces, start, hillsPreference, greenPreference }
         │
@@ -74,7 +75,7 @@ package.json  tsconfig.json  vitest.config.ts  .gitignore  README.md
 
 ```ts
 export interface RouteConfig {
-  start: [number, number];          // [lon, lat]
+  start: [number, number];          // [lon, lat] — the request's start, from the caller
   hillsPreference?: number;          // -1..1, default 0
   greenPreference?: number;          // 0..1, default 0
   paces: Record<string, number>;    // phrase (lowercased) → min/km
@@ -95,8 +96,9 @@ export const DEFAULT_PACES: Record<string, number> = {
 };
 ```
 
-Home `start` is personal and never committed — it lives only in the user's
-iCloud config file. `config.example.json` ships a placeholder.
+`start` is the caller's start point (`[lon, lat]`), never stored — the Shortcut
+sends the device's current location, so routes generate wherever you set off.
+`config.example.json` holds only the paces and preferences.
 
 ### `src/workout.ts`
 
@@ -317,9 +319,11 @@ implementation starts.
 
 ## `config.example.json`
 
+The template for the iCloud config — paces and preferences only. `start` is not
+here; the Shortcut sends the device's current location per request.
+
 ```json
 {
-  "start": [-0.1278, 51.5074],
   "hillsPreference": 0.0,
   "greenPreference": 0.0,
   "paces": {
@@ -335,8 +339,8 @@ implementation starts.
   endpoint. No live network calls in tests.
 - `npm run typecheck` (`tsc --noEmit`) must pass.
 - Manual/out-of-band (documented in `shortcut-spec.md`, not automated): deploy to
-  Vercel, hit `GET /api/route?distanceKm=3&start=<home>` from a browser, confirm
-  the GPX opens and imports into a Runna workout on the phone.
+  Vercel, hit `GET /api/route?distanceKm=3&start=<lon>,<lat>` from a browser,
+  confirm the GPX opens and imports into a Runna workout on the phone.
 
 ## Risks & non-goals
 
@@ -349,6 +353,6 @@ implementation starts.
 | `overriddenParameters` present | Surfaced in the response `route.overriddenParameters` and a warning. |
 
 **Non-goals for v1:** custom routing engine; Runna private API; automated GPX
-*import* into Runna (stays a manual share-sheet step); Garmin support (same GPX,
-loaded into Garmin Connect directly); response caching; scheduling beyond a
-single Time-of-Day automation; multiple saved start points.
+*import* into Runna (stays a manual in-app step); Garmin support (same GPX,
+loaded into Garmin Connect directly); response caching; scheduled/automated
+runs. The start point is the caller's current location — no saved start points.
