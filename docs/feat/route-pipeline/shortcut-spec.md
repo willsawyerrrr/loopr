@@ -193,16 +193,15 @@ JSON file directly in the Files app.
 
 ## Running it
 
-Run "Runna Route" **when and where you set off** — the route starts from your
-current location, so a fixed morning schedule only makes sense if you always
-start from home. Put the Shortcut on the Home Screen / in the widget for a
-one-tap launch before a run.
+A **Time-of-Day automation** (**Shortcuts → Automation → Time of Day → Run
+Immediately**) runs "Runna Route" each morning, generating the day's route from
+wherever the phone is at that minute — usually home. On days you start
+elsewhere, run the Shortcut manually from where you set off (Home Screen /
+widget for a one-tap launch); it takes a fresh current-location fix each time.
 
-A Time-of-Day automation (**Shortcuts → Automation → Time of Day → Run
-Immediately**) is possible but of limited use here: it would capture wherever
-the phone is at that minute, and Apple forces an unsuppressable notification
-banner on "Run Immediately" automations anyway. Importing the GPX into Runna is
-a manual in-app step regardless.
+Two things stay manual regardless: Apple forces an unsuppressable notification
+banner on "Run Immediately" automations, and importing the GPX into Runna is an
+in-app step (workout → Add Route → file picker).
 
 ## Manual verification checklist (out of band)
 
