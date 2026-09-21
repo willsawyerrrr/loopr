@@ -158,7 +158,7 @@ struct RunDetailView: View {
             }
             if let route {
                 Section {
-                    RouteMapView(points: route.points, pins: route.shape?.pins ?? [], interactive: false)
+                    RouteMapView(points: route.points, start: route.shape?.start, pins: route.shape?.pins ?? [], interactive: false)
                         .frame(height: 300)
                         .listRowInsets(EdgeInsets())
                     RouteStatsView(
@@ -168,6 +168,7 @@ struct RunDetailView: View {
                         hilliness: route.hilliness,
                         elevationGainPerKm: route.elevationGainPerKm
                     )
+                    if let startLabel = route.startLabel { StartedFromLabel(label: startLabel) }
                     ForEach(route.warnings, id: \.self) { warning in
                         Label(warning, systemImage: "exclamationmark.circle").font(.footnote)
                     }

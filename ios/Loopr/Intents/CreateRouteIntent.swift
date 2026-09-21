@@ -79,16 +79,22 @@ enum RouteCreation {
 
     static func create(km: Double) async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog & ShowsSnippetIntent {
         let start = try await StartResolver().resolve { try await currentPoint() }
-        let draft = try await RouteGenerator.makeDraft(targetKm: km, start: start.point)
-        return present(draft, start: start.source)
+        let draft = try await RouteGenerator.makeDraft(targetKm: km, start: start)
+        return present(draft)
     }
 
     /// The map snippet result for `draft`; `detail` follows "route" in the spoken line and `notes` end it.
+    /// The line names the start unless it was the current location.
     static func present(
-        _ draft: RouteDraft, start source: ResolvedStart.Source, detail: String = "", notes: [String] = []
+        _ draft: RouteDraft, detail: String = "", notes: [String] = []
     ) -> some IntentResult & ReturnsValue<String> & ProvidesDialog & ShowsSnippetIntent {
         let summary = RouteFormat.subtitle(distanceKm: draft.response.route.distanceKm, ascentM: draft.response.route.ascentM)
-        let origin = source == .lastUsed ? " from your last start point" : ""
+        let origin =
+            switch draft.start.source {
+            case .current: ""
+            case .lastUsed: " from your last start point"
+            case .chosen, .defaultStart: " from \(draft.start.label)"
+            }
         let spoken = "Here's a \(summary) route\(detail)\(origin)." + notes.map { " \($0)" }.joined()
         return .result(
             value: summary,

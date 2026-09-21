@@ -19,13 +19,13 @@ enum RouteStore {
     @discardableResult
     static func save(
         response: RouteResponse, points: [RoutePoint], name: String? = nil, eventKey: String? = nil,
-        shape: RouteShape? = nil
+        shape: RouteShape? = nil, startLabel: String? = nil
     ) -> SavedRoute {
         let route: SavedRoute
         if let eventKey, let existing = self.route(forEventKey: eventKey) {
             existing.update(
                 targetDistanceKm: response.targetDistanceKm, summary: response.route, previewUrl: response.previewUrl,
-                points: points, warnings: response.warnings, shape: shape)
+                points: points, warnings: response.warnings, shape: shape, startLabel: startLabel)
             route = existing
         } else {
             route = SavedRoute(
@@ -36,7 +36,8 @@ enum RouteStore {
                 points: points,
                 warnings: response.warnings,
                 eventKey: eventKey,
-                shape: shape
+                shape: shape,
+                startLabel: startLabel
             )
             container.mainContext.insert(route)
         }

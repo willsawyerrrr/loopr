@@ -52,6 +52,19 @@ private func json(_ request: RouteRequest) throws -> [String: Any] {
         #expect(RouteShape(pins: [start]).summary == "1 pin")
         #expect(RouteShape(pins: [start, start], heading: 40).summary == "2 pins · NE")
         #expect(!RouteShape(heading: 0).isEmpty)
+        #expect(!RouteShape(start: StartPlace(point: start)).isEmpty)
+        #expect(RouteShape(start: StartPlace(point: start)).summary == "Custom start")
+        #expect(RouteShape(pins: [start], heading: 40, start: StartPlace(point: start)).summary == "Custom start · 1 pin · NE")
+    }
+
+    @Test func setsAndClearsStart() {
+        var shape = RouteShape()
+        shape.startPlace = StartPlace(point: start, name: "Circular Quay")
+        #expect(shape.start == start)
+        #expect(shape.startName == "Circular Quay")
+        shape.startPlace = nil
+        #expect(shape.isEmpty)
+        #expect(shape.startName == nil)
     }
 
     @Test func codableRoundTrip() throws {
@@ -60,6 +73,23 @@ private func json(_ request: RouteRequest) throws -> [String: Any] {
         #expect(decoded == shape)
         let lenient = try JSONDecoder().decode(RouteShape.self, from: Data(#"{"heading":-10}"#.utf8))
         #expect(lenient == RouteShape(heading: 350))
+    }
+
+    @Test func startSurvivesARoundTrip() throws {
+        let shape = RouteShape(
+            pins: [start], heading: 90, start: StartPlace(point: RoutePoint(longitude: 151.21, latitude: -33.86), name: "The Rocks"))
+        let decoded = try JSONDecoder().decode(RouteShape.self, from: JSONEncoder().encode(shape))
+        #expect(decoded == shape)
+        #expect(decoded.startName == "The Rocks")
+        let unnamed = RouteShape(start: StartPlace(point: start))
+        #expect(try JSONDecoder().decode(RouteShape.self, from: JSONEncoder().encode(unnamed)) == unnamed)
+    }
+
+    @Test func decodesShapesSavedWithoutAStart() throws {
+        let old = try JSONDecoder().decode(RouteShape.self, from: Data(#"{"pins":[[151.2093,-33.8688]],"heading":90}"#.utf8))
+        #expect(old == RouteShape(pins: [start], heading: 90))
+        #expect(old.start == nil)
+        #expect(old.startName == nil)
     }
 
     @Test func requestOmitsEmptyShape() throws {
@@ -108,6 +138,23 @@ private func json(_ request: RouteRequest) throws -> [String: Any] {
 
         route.update(targetDistanceKm: 3, summary: summary, previewUrl: nil, points: [start], warnings: [], shape: RouteShape())
         #expect(route.shape == nil)
+    }
+
+    @Test func persistsStartAndItsLabel() throws {
+        let container = try SavedRoute.makeContainer(inMemory: true)
+        let shape = RouteShape(start: StartPlace(point: start, name: "Home"))
+        let route = SavedRoute(
+            name: "Loop", targetDistanceKm: 3, summary: summary, previewUrl: nil, points: [start], shape: shape,
+            startLabel: "Home")
+        container.mainContext.insert(route)
+        try container.mainContext.save()
+        let saved = try #require(try container.mainContext.fetch(FetchDescriptor<SavedRoute>()).first)
+        #expect(saved.shape?.startPlace == StartPlace(point: start, name: "Home"))
+        #expect(saved.startLabel == "Home")
+
+        route.update(targetDistanceKm: 3, summary: summary, previewUrl: nil, points: [start], warnings: [], startLabel: "Current location")
+        #expect(route.shape == nil)
+        #expect(route.startLabel == "Current location")
     }
 
     @Test func routesWithoutShapeHaveNone() {

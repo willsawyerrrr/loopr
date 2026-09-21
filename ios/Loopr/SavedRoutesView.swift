@@ -47,7 +47,7 @@ struct RouteDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RouteMapView(points: route.points, pins: route.shape?.pins ?? [])
+            RouteMapView(points: route.points, start: route.shape?.start, pins: route.shape?.pins ?? [])
             RouteStatsView(
                 distanceKm: route.distanceKm,
                 ascentM: route.ascentM,
@@ -56,6 +56,9 @@ struct RouteDetailView: View {
                 elevationGainPerKm: route.elevationGainPerKm
             )
             .padding()
+            if let startLabel = route.startLabel {
+                StartedFromLabel(label: startLabel).padding(.bottom)
+            }
         }
         .navigationTitle(route.name)
         .navigationBarTitleDisplayMode(.inline)

@@ -42,7 +42,7 @@ struct SaveRouteDraftIntent: AppIntent {
         guard let id = UUID(uuidString: draftID) else { throw RouteDraftError.expired }
         var draft = try await DraftStore.shared.draft(id)
         if draft.savedID == nil {
-            draft.savedID = RouteStore.save(response: draft.response, points: draft.points).id
+            draft.savedID = RouteStore.save(response: draft.response, points: draft.points, startLabel: draft.start.label).id
             await DraftStore.shared.put(draft)
         }
         RoutePreviewSnippetIntent.reload()
@@ -88,6 +88,9 @@ struct RoutePreviewView: View {
             Text(draft.response.route.hilliness.capitalized)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            if draft.start.source != .current {
+                StartedFromLabel(label: draft.start.label)
+            }
             HStack {
                 if draft.savedID == nil {
                     Button(intent: SaveRouteDraftIntent(draftID: draft.id)) {
