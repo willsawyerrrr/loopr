@@ -53,6 +53,11 @@ enum RouteGenerator {
         )
         if regenerate { request = request.regenerated() }
         let response = try await RouteService(timeout: 25).generate(request)
+        return try await draft(from: response, targetKm: targetKm, start: start)
+    }
+
+    /// Stores an already generated `response` as a draft, so Regenerate reuses `targetKm` and `start`.
+    static func draft(from response: RouteResponse, targetKm: Double, start: RoutePoint) async throws -> RouteDraft {
         let points = response.resolvedPoints()
         guard !points.isEmpty else { throw RouteDraftError.noGeometry }
         var draft = RouteDraft(

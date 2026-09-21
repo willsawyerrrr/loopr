@@ -51,7 +51,9 @@ A native iOS app in `ios/` reads the subscribed Runna calendar, lists your
 upcoming runs, and generates, views, saves and exports a route for each from
 this endpoint. It can also prepare the next route each morning and notify you.
 You import the GPX in the Runna app (planned workout → Add Route → file
-picker). See `docs/feat/ios-app/overview.md`.
+picker). It also makes a route from a screenshot of a Runna workout — from the
+app, or a Shortcut run by Back Tap or the Action Button. See
+`docs/feat/ios-app/overview.md`.
 
 An iOS 26 Shortcut is an alternative client: it reads the same calendar, calls
 this function, and saves the GPX to iCloud Drive. See

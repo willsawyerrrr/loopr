@@ -17,17 +17,20 @@ struct RunsView: View {
     @Query private var routes: [SavedRoute]
     @State private var state = Phase.loading
     @State private var showSettings = false
+    @State private var showScreenshot = false
 
     var body: some View {
         NavigationStack {
             content
                 .navigationTitle("Runs")
                 .toolbar {
+                    Button("From screenshot", systemImage: "camera.viewfinder") { showScreenshot = true }
                     Button("Settings", systemImage: "gear") { showSettings = true }
                 }
                 .navigationDestination(for: PlannedRun.self) { RunDetailView(run: $0) }
         }
         .sheet(isPresented: $showSettings, onDismiss: refresh) { SettingsView() }
+        .sheet(isPresented: $showScreenshot) { ScreenshotRouteView() }
         .task { refresh() }
         .onChange(of: scenePhase) { if scenePhase == .active { refresh() } }
         .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged)) { _ in refresh() }

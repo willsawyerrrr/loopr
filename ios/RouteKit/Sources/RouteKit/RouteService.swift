@@ -34,10 +34,11 @@ public struct RouteService: Sendable {
         self.transport = transport
     }
 
-    public func generate(_ request: RouteRequest) async throws -> RouteResponse {
+    /// Posts `request`; `timeout` overrides the service's default for this call.
+    public func generate(_ request: RouteRequest, timeout: TimeInterval? = nil) async throws -> RouteResponse {
         var urlRequest = URLRequest(url: baseURL.appending(path: "api/route"))
         urlRequest.httpMethod = "POST"
-        urlRequest.timeoutInterval = timeout
+        urlRequest.timeoutInterval = timeout ?? self.timeout
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.httpBody = try JSONEncoder().encode(request)
 

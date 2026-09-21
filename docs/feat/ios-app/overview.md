@@ -33,8 +33,11 @@ ios/
   - `PaceStore` — the pace table (phrase to min/km) in `UserDefaults`, seeded
     with the defaults from `src/config.ts`.
   - `RouteResponse` — decodes `gpx`, `filename`, `route`, `warnings`,
-    `previewUrl` and `coordinates`. `resolvedPoints()` uses `coordinates` when
-    the API returns them and otherwise parses the points out of `gpx`.
+    `previewUrl`, `coordinates`, `segments` and `checksum`. `resolvedPoints()`
+    uses `coordinates` when the API returns them and otherwise parses the
+    points out of `gpx`.
+  - `OCRLayout` / `WorkoutText` / `WorkoutOutline` / `ScreenshotRoutePipeline` —
+    the screenshot logic (see below), pure and free of Vision.
   - `SavedRoute` — the SwiftData model (metadata, coordinates, server warnings,
     the shape used and, for calendar runs, the event key); `SavedRoute.makeContainer()` opens
     the on-device store.
@@ -45,12 +48,14 @@ ios/
   - `StartResolver` / `LastStartStore` — a fresh location fix if one arrives
     within 8 s, otherwise the last start point used, otherwise a clear error.
   - `RouteFormat` — the shared distance / name / subtitle strings.
-- **`Loopr`** is the UI: a *Runs* tab (upcoming Runna runs), a *Generate* tab
+- **`Loopr`** is the UI: a *Runs* tab (upcoming Runna runs, and a *From
+  screenshot* button), a *Generate* tab
   (distance, hills, green, current location as start, map, save, share GPX) and
   a *Saved* tab (list, detail map, swipe to delete, share GPX). The *Shape route*
   sheet (`ShapeSheet`) is shared by the *Generate* tab and the run detail. The EventKit
   adapter (`RunCalendar`), route generation for a run (`RunPreparation`) and the
-  background refresh (`MorningRefresh`) live here. Generating again on the
+  background refresh (`MorningRefresh`) live here, as do the Vision and
+  Foundation Models code for screenshots (`ScreenshotOCR`, `WorkoutRewriter`). Generating again on the
   *Generate* tab, *Regenerate* on a run and the snippet's **Regenerate** all send
   a fresh `variant`.
 
@@ -144,6 +149,7 @@ beyond the location usage string are needed.
 |---|---|
 | `CreateRouteOfDistanceIntent` | Backs the phrases that say the distance aloud. Takes a whole-kilometre `DistanceEntity` (1–50 km) and otherwise behaves like `CreateRouteIntent`. |
 | `CreateRouteIntent` | Takes a distance, generates a loop from the current location (or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
+| `CreateRouteFromScreenshotIntent` | Takes a screenshot of a Runna workout, reads its distance and returns the same map snippet. Not a Siri phrase; see *Route from a screenshot*. |
 | `OpenRouteIntent` | Opens a saved route in the app. |
 
 Say the distance in the phrase — *"Create a 10 km route in Loopr"*,
@@ -173,6 +179,93 @@ Shortcut). *"Open `<route>` in Loopr"* opens a saved route.
 - **Saved routes** are `AppEntity` / `IndexedEntity` values, indexed in
   Spotlight when saved and removed when deleted, and matched by name for
   Siri.
+
+## Route from a screenshot
+
+A screenshot of the Runna workout screen turns into a route the same way a
+calendar run does: the recognised text is sent to `POST /api/route` as
+`workout`, and the server's parser works out the distance.
+
+**Getting the image.** iOS has no API to capture another app's screen, and
+Siri's on-screen awareness only exposes an app's own content, so Siri can't read
+Runna. "The current Runna screen" therefore means a screenshot:
+
+- **In the app:** on the *Runs* tab, *From screenshot* opens a sheet with a
+  `PhotosPicker` limited to screenshots (newest first, no Photos permission
+  needed) and a paste button for an image on the clipboard. The sheet shows the
+  recognised text in an editor; correct it and *Make route from this text* to
+  regenerate. The result is the same as everywhere else: map, stats, warnings,
+  *Save route* and *Share GPX*.
+- **From Shortcuts, Back Tap or the Action Button:** `CreateRouteFromScreenshotIntent`
+  takes an image (`IntentFile`) and runs in the background. Build a one-action
+  shortcut, *Take Screenshot* followed by *Create Route from Screenshot*, then
+  bind it under *Settings → Accessibility → Touch → Back Tap*, or to the Action
+  Button. With Runna's workout screen showing, a double tap makes the route and
+  shows the usual map snippet with **Save** and **Regenerate**. It is not an App
+  Shortcut phrase: Siri can't supply the image, so it appears only in the
+  Shortcuts app. Its optional *Distance* parameter is used instead of the
+  workout when given, and is what the shortcut asks for when the workout can't
+  be confirmed.
+- There is no Share Extension. Sharing a screenshot into Loopr would need an
+  App Group to hand the image to the app, which a free Apple team doesn't get.
+
+**Reading the screen.** `ScreenshotOCR` runs Vision's `RecognizeTextRequest`
+(accurate level, English) and turns each observation into an `OCRFragment` with
+its position. `OCRLayout` orders them top to bottom and joins fragments that
+share a row, first dropping the step numbers in the left gutter and the `WALK` /
+`RUN` badges at the right of each step. `WorkoutText.read` then produces the
+Notes-style text:
+
+- only the steps between the `Description` heading and the `Start Workout`
+  button are kept; the title, status bar, briefing card, quick actions, coach
+  card and any completed-activity card sit outside them;
+- section headers separate blocks with a blank line; a `Repeat xN` header
+  (also `Repeat ×N`, `Repeat Nx`, a leading icon glyph) becomes `N reps of:` and
+  each row until the next header becomes a bullet, as in the calendar Notes;
+- common OCR confusions are fixed (`O`/`o` as `0` and `I`/`l` as `1` in
+  quantities, `2,5km`, `60S`, `60 secs`, `4:25 /km`), the info glyph after
+  `pace` is dropped and wrapped lines are joined.
+
+The `Type • Nkm` line under the title is not sent. That figure counts only the
+running, so the server's checksum, which compares it with the whole workout,
+would flag a correct parse. It is checked separately instead (below).
+
+**Checks and fallbacks.** `ScreenshotRoutePipeline` accepts the response only
+when:
+
+1. `checksum.ok` is true, and
+2. when the screen states a running distance, the parsed running steps
+   (`segments` with `activity == "run"`) agree with it to within 0.3 km or 10 %.
+
+If either fails, or the server can't derive a distance (422), and the on-device
+model is available (`SystemLanguageModel.default.availability == .available`),
+Foundation Models rewrites the recognised lines into structured steps
+(`@Generable`: blocks of `repeats` and `steps`, rendered to Notes-style text by
+`WorkoutOutline`) and the request is retried once. If that doesn't pass either,
+or the model is unavailable, or there isn't time left in an intent's budget, the
+problems are shown verbatim, the recognised text stays editable, and a manual
+distance (prefilled with the best guess) generates a loop from the existing
+manual request. In the intent this is the *Distance* parameter's prompt. A route
+with a wrong distance is never returned silently.
+
+A workout with no stated running distance (a time-based walk/run) has nothing to
+check against, so its route is returned with a note that the distance comes from
+the steps at the pace settings. A rewritten workout is noted too. Edited text is
+sent as written, without a rewrite.
+
+**Limits.**
+
+- The intent shares the ~30 s background budget: location and recognition
+  overlap and the requests together get 20 s, so the rewrite retry is skipped
+  when less than 8 s remains.
+- The recognition fixtures are Vision's output (macOS) for real screenshots of a
+  distance-based continuous run and a distance-based walk/run with a repeat,
+  plus the structure of a time-based walk/run. Other layouts (long workouts that
+  scroll, other step types, light mode, a different Runna version) are
+  unverified, and the steps must be fully visible in the screenshot. A simulator
+  test also reads a rendered workout image through the app's Vision helper.
+- The rewrite fallback and the intent's background timing were not run on a
+  device.
 
 ## Run it
 
@@ -205,6 +298,22 @@ routes), server error handling, the
 SwiftData store, distance conversion, start-point resolution, the display
 strings, run selection and request building from calendar events, calendar
 choice, the morning schedule time and the pace table.
+
+Also covers the screenshot pipeline: OCR fixtures of real Runna screens
+(fragments with positions and plain lines) to the expected Notes-style text,
+OCR confusions, wrapped lines, repeat variants, and the pipeline's accept,
+rewrite and manual-distance decisions with a mocked transport.
+`test/screenshot-workout.test.ts` feeds the same expected texts to the server's
+parser. The image-to-text step is checked by `ScreenshotOCRTests` in the app
+target, which renders a workout screen and runs it through Vision (it compiles
+`ScreenshotOCR.swift` into the test bundle rather than launching the app, and
+Vision is slow in the simulator, about a minute):
+
+```sh
+cd ios && xcodegen generate
+xcodebuild test -project Loopr.xcodeproj -scheme Loopr \
+  -destination 'platform=iOS Simulator,name=iPhone 17'
+```
 
 The EventKit adapter is a thin wrapper over that logic and is not unit-tested.
 Voice invocation, background location inside an intent, calendar access and

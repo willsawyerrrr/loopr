@@ -35,6 +35,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.willsawyerrrr.Loopr
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: NO
+  LooprTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [LooprTests, Loopr/ScreenshotOCR.swift]
+    dependencies:
+      - package: RouteKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.willsawyerrrr.LooprTests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Loopr:
     build:
@@ -44,3 +54,4 @@ schemes:
       config: Debug
     test:
       config: Debug
+      targets: [LooprTests]
