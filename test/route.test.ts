@@ -208,12 +208,16 @@ describe("generateRoute — overriddenParameters surfaced", () => {
 });
 
 describe("POST /api/route — output formats", () => {
-  it("returns gpx + previewUrl but not the raw coordinates", async () => {
+  it("returns gpx, coordinates and previewUrl", async () => {
     stubRouter(ROUTER_BODY);
     const json = await readJson(
       await POST(postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START })),
     );
-    expect(json.coordinates).toBeUndefined();
+    expect(json.coordinates).toEqual([
+      [-0.1278, 51.5074, 12.5],
+      [-0.13, 51.5, 20],
+      [-0.1278, 51.5074, 12.5],
+    ]);
     expect(json.gpx).toContain("<trkpt");
     // no KV store in tests → the inline-token fallback
     expect(json.previewUrl).toMatch(
