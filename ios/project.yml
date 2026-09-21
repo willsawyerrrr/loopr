@@ -1,0 +1,43 @@
+name: RunnaRouter
+options:
+  bundleIdPrefix: dev.willsawyerrrr
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+packages:
+  RouteKit:
+    path: RouteKit
+targets:
+  RunnaRouter:
+    type: application
+    platform: iOS
+    sources: [RunnaRouter]
+    dependencies:
+      - package: RouteKit
+    info:
+      path: RunnaRouter/Info.plist
+      properties:
+        CFBundleDisplayName: Runna Router
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSLocationWhenInUseUsageDescription: Runna Router starts each route from where you are.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.willsawyerrrr.RunnaRouter
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: NO
+schemes:
+  RunnaRouter:
+    build:
+      targets:
+        RunnaRouter: all
+    run:
+      config: Debug
+    test:
+      config: Debug
