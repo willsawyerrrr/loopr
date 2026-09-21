@@ -25,6 +25,9 @@ this function, and saves the GPX to iCloud Drive; you import it in the Runna app
 (planned workout → Add Route → file picker). See
 `docs/feat/route-pipeline/shortcut-spec.md`.
 
+A native iOS app in `ios/` generates, views, saves and exports routes from the
+same endpoint. See `docs/feat/ios-app/overview.md`.
+
 ## Development
 
 ```sh
