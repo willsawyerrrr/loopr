@@ -11,10 +11,11 @@ candidate closest to that distance, and converts it to a GPX 1.1 track.
 `GET`/`POST` `/api/route` returns JSON by default:
 
 ```json
-{ "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "segments": [], "checksum": {}, "warnings": [] }
+{ "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "coordinates": [], "segments": [], "checksum": {}, "warnings": [] }
 ```
 
-The response also carries a `previewUrl` — a short link
+`coordinates` is the chosen route as `[lon, lat, ele?]` points, so a client can
+draw it without parsing the GPX. The response also carries a `previewUrl` — a short link
 (`/api/preview?id=…`, backed by a KV store, 30-day expiry) to a Leaflet map of
 that exact route on OpenStreetMap. `?format=gpx` returns the file directly;
 `?format=html` returns the same map page rendered from a fresh route.

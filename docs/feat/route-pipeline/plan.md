@@ -27,7 +27,7 @@ iOS 26 Shortcut "Runna Route"
     lineStringToGpx(coords, name)     → GPX 1.1 track XML (with <ele>)
     → JSON { gpx, filename, targetDistanceKm,
              route:{distanceKm, ascentM, descentM, elevationGainPerKm, hilliness, greenScore},
-             segments, checksum, warnings, previewUrl }
+             coordinates:[lon, lat, ele?][], segments, checksum, warnings, previewUrl }
         │
         ▼
   Get Dictionary Value → gpx, checksum.ok, targetDistanceKm, route.distanceKm, previewUrl
@@ -278,8 +278,8 @@ export async function POST(request: Request): Promise<Response>;
 - Merge `paces` over `DEFAULT_PACES`; apply `DEFAULTS` for missing prefs.
 - Call `generateRoute`; on `TrailRouterError` → 502 with `{ error, detail }`;
   on parse error → 422 `{ error, detail }`.
-- 200 → `Response.json({ ...result, previewUrl })`. The `coordinates` array is
-  stripped from the body. `previewUrl` is `<origin>/api/preview?id=<12 hex>` when
+- 200 → `Response.json({ ...result, previewUrl })`. `coordinates` (`[lon, lat,
+  ele?][]`) is included so native clients can draw the route. `previewUrl` is `<origin>/api/preview?id=<12 hex>` when
   the KV store accepted the write, else `<origin>/api/preview?r=<token>` (the
   gzipped-base64url `PreviewData`). `putPreview` never throws.
 - Also accept `GET /api/route?distanceKm=&start=lon,lat&hills=` for quick manual
