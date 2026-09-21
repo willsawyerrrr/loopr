@@ -92,7 +92,7 @@ async function run(
     const previewUrl = id
       ? `${origin}/api/preview?id=${id}`
       : `${origin}/api/preview?r=${encodePreview(preview)}`;
-    return json({ ...result, previewUrl }, 200);
+    return json({ ...result, coordinates, previewUrl }, 200);
   } catch (err) {
     if (err instanceof RouteInputError) return json({ error: err.message }, 400);
     if (err instanceof RouteParseError) {
