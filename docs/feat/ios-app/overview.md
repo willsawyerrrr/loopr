@@ -20,6 +20,11 @@ ios/
     `[lon, lat]` and the hills/green preferences. `RouteRequest.regenerated()`
     adds a random `variant` (1–1,000,000) so the server returns a different loop
     than the last one; first generations send none.
+  - `RouteShape` — the pins (at most 3) and rough heading (degrees clockwise
+    from north, normalised to `[0, 360)`; `CompassPoint` maps `N`…`NW` to and
+    from degrees) that steer a loop. `applied(to:)` sets the request's `waypoints`
+    and `heading`, both omitted when empty; `unreachablePins(from:targetKm:)`
+    flags pins beyond the distance the server accepts.
   - `RunPlan` / `CalendarEvent` / `PlannedRun` — the pure calendar logic, with no
     EventKit import: picks all-day events in `[start of today, +8 days)`
     earliest first, builds the workout request from an event, chooses the
@@ -30,8 +35,8 @@ ios/
   - `RouteResponse` — decodes `gpx`, `filename`, `route`, `warnings`,
     `previewUrl` and `coordinates`. `resolvedPoints()` uses `coordinates` when
     the API returns them and otherwise parses the points out of `gpx`.
-  - `SavedRoute` — the SwiftData model (metadata, coordinates, server warnings
-    and, for calendar runs, the event key); `SavedRoute.makeContainer()` opens
+  - `SavedRoute` — the SwiftData model (metadata, coordinates, server warnings,
+    the shape used and, for calendar runs, the event key); `SavedRoute.makeContainer()` opens
     the on-device store.
   - `GPXWriter` / `GPXParser` / `GPXFile` — GPX 1.1 output matching the server
     and a `Transferable` that shares a `.gpx` file.
@@ -42,7 +47,8 @@ ios/
   - `RouteFormat` — the shared distance / name / subtitle strings.
 - **`Loopr`** is the UI: a *Runs* tab (upcoming Runna runs), a *Generate* tab
   (distance, hills, green, current location as start, map, save, share GPX) and
-  a *Saved* tab (list, detail map, swipe to delete, share GPX). The EventKit
+  a *Saved* tab (list, detail map, swipe to delete, share GPX). The *Shape route*
+  sheet (`ShapeSheet`) is shared by the *Generate* tab and the run detail. The EventKit
   adapter (`RunCalendar`), route generation for a run (`RunPreparation`) and the
   background refresh (`MorningRefresh`) live here. Generating again on the
   *Generate* tab, *Regenerate* on a run and the snippet's **Regenerate** all send
@@ -69,6 +75,38 @@ once a route exists it also shows the distance and a checkmark.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
   event identifier plus date), and appears in *Saved* too. *Regenerate* sends a
   fresh `variant` and updates that same saved route with a different loop.
+
+## Shape sheet
+
+A **Shape route** row on the *Generate* tab and on a run's detail opens a sheet
+with a map centred on the start (the current location, or the last start point
+used; with neither the sheet says so). The row shows the current shape (`2 pins ·
+NE`, or `Off`).
+
+- **Pins:** tap the map to drop up to 3 numbered pins, drag one to move it, and
+  remove it from its context menu or the minus button beneath the map. The loop
+  passes through the pins in a sensible order.
+- **Heading:** *Any*, `N`, `NE`, `E`, `SE`, `S`, `SW`, `W` or `NW` picks the direction
+  the loop should head toward. With pins, it chooses which side the loop bulges
+  and the visiting order.
+- **Clear** removes the pins and the heading; **Done** keeps them.
+- The shape is sent as `waypoints` and `heading` with every request from that
+  screen, including regenerations. The result map numbers the pins.
+- On a run, the shape defaults to the one the saved route was generated with and
+  is saved with the route, so *Regenerate* keeps it. A run generates
+  automatically when first opened, so shape a run after that first route and
+  regenerate. Morning refresh reuses the saved shape, or none.
+- Siri and Shortcuts requests are not shaped.
+
+Limits:
+
+- A pin further from the start than 0.75 × the target distance can't be part of a
+  loop of that length. The pin turns orange and the server rejects the request;
+  move it closer or raise the distance.
+- When the pins force a length well off the target, the route is still returned
+  and the server adds a warning giving its real length.
+- Trail Router isn't guaranteed to follow pins exactly: a route passes near each
+  pin, on the nearest routable path, and may not be a clean loop.
 
 ## Settings
 
@@ -161,7 +199,9 @@ swift test
 ```
 
 Covers response decoding (with and without `coordinates`), GPX writing and
-parsing, request encoding (manual and workout), server error handling, the
+parsing, request encoding (manual and workout), route shapes (pin cap, heading
+normalisation, compass points, request fields, reach check, persistence on saved
+routes), server error handling, the
 SwiftData store, distance conversion, start-point resolution, the display
 strings, run selection and request building from calendar events, calendar
 choice, the morning schedule time and the pace table.

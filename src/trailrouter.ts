@@ -24,6 +24,13 @@ export interface TrailRouterQuery {
   targetDistanceMeters: number;
   hillsPreference: number;
   greenPreference: number;
+  /**
+   * Ordered `[lon, lat]` points the route passes through before returning to `start`. Sent as a
+   * point-to-point request (`roundtrip=false`), which honours every point but returns its own
+   * length rather than `targetDistanceMeters`. Absent = a round trip that ignores extra points.
+   */
+  through?: [number, number][];
+  signal?: AbortSignal;
 }
 
 export class TrailRouterError extends Error {
@@ -39,10 +46,13 @@ export class TrailRouterError extends Error {
 }
 
 function buildUrl(q: TrailRouterQuery): string {
+  const points = q.through ? [q.start, ...q.through, q.start] : [q.start];
   const params = new URLSearchParams({
-    coordinates: `${q.start[0]},${q.start[1]}`,
-    roundtrip: "true",
-    target_distance: String(Math.round(q.targetDistanceMeters)),
+    coordinates: points.map(([lon, lat]) => `${lon},${lat}`).join("|"),
+    roundtrip: String(!q.through),
+    ...(q.through
+      ? {}
+      : { target_distance: String(Math.round(q.targetDistanceMeters)) }),
     hills_preference: String(q.hillsPreference),
     green_preference: String(q.greenPreference),
     avoid_repetition: String(DEFAULTS.avoidRepetition),
@@ -113,6 +123,7 @@ export async function fetchRoutes(
   try {
     response = await fetchImpl(buildUrl(q), {
       headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+      ...(q.signal ? { signal: q.signal } : {}),
     });
   } catch (cause) {
     throw new TrailRouterError("Trail Router request failed", null, String(cause));

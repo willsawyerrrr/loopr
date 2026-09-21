@@ -21,6 +21,25 @@ export const DEFAULTS = {
   variantTolerance: 0.05,
   /** Bounds, in metres, of the seeded offset applied to the start when asking Trail Router for a `variant > 0` route. */
   variantNudgeMeters: { min: 40, max: 120 },
+  /** Route steering (`waypoints` / `heading`). */
+  guided: {
+    maxWaypoints: 3,
+    /** A pin may be at most this fraction of the target distance from the start. */
+    pinRadiusFactor: 0.75,
+    /** Fraction of the target the final route may differ by without a warning. */
+    tolerance: 0.07,
+    /** Fraction of the target at which tuning stops early. */
+    goodEnough: 0.04,
+    maxRequests: 8,
+    /** Wall-clock budget for all Trail Router requests of one route, in milliseconds. */
+    timeBudgetMs: 15_000,
+    /** Route length over straight-line anchor length, assumed before a measurement exists. */
+    assumedRouteFactor: 1.25,
+    /** Half-angle, in degrees, between the two anchors of a heading-only triangle loop. */
+    headingSpreadDegrees: 35,
+    /** A route further than this from a pin, in metres, draws a warning. */
+    pinMissMeters: 100,
+  },
 } as const;
 
 export const DEFAULT_PACES: Record<string, number> = {

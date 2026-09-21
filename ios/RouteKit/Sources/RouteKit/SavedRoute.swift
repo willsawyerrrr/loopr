@@ -20,6 +20,7 @@ public final class SavedRoute {
     public var eventKey: String?
     private var pointsData: Data
     private var warningsData: Data?
+    private var shapeData: Data?
 
     public init(
         name: String,
@@ -29,6 +30,7 @@ public final class SavedRoute {
         points: [RoutePoint],
         warnings: [String] = [],
         eventKey: String? = nil,
+        shape: RouteShape? = nil,
         createdAt: Date = .now
     ) {
         self.id = UUID()
@@ -45,11 +47,13 @@ public final class SavedRoute {
         self.eventKey = eventKey
         self.pointsData = (try? JSONEncoder().encode(points)) ?? Data()
         self.warningsData = try? JSONEncoder().encode(warnings)
+        self.shapeData = Self.encode(shape)
     }
 
-    /// Replaces the route's geometry and metrics, keeping its identity, name and event.
+    /// Replaces the route's geometry, metrics and shape, keeping its identity, name and event.
     public func update(
-        targetDistanceKm: Double, summary: RouteSummary, previewUrl: String?, points: [RoutePoint], warnings: [String]
+        targetDistanceKm: Double, summary: RouteSummary, previewUrl: String?, points: [RoutePoint], warnings: [String],
+        shape: RouteShape? = nil
     ) {
         self.targetDistanceKm = targetDistanceKm
         distanceKm = summary.distanceKm
@@ -61,6 +65,17 @@ public final class SavedRoute {
         self.previewUrl = previewUrl
         pointsData = (try? JSONEncoder().encode(points)) ?? Data()
         warningsData = try? JSONEncoder().encode(warnings)
+        shapeData = Self.encode(shape)
+    }
+
+    private static func encode(_ shape: RouteShape?) -> Data? {
+        guard let shape, !shape.isEmpty else { return nil }
+        return try? JSONEncoder().encode(shape)
+    }
+
+    /// The pins and heading the route was generated with, if any.
+    public var shape: RouteShape? {
+        shapeData.flatMap { try? JSONDecoder().decode(RouteShape.self, from: $0) }
     }
 
     /// The server warnings from when the route was generated.

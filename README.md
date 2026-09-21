@@ -24,6 +24,23 @@ within ±5% of the target (the closest when none qualify). The same `variant`
 repeats the same choice; a different one gives a different loop. The response
 carries the applied `variant`.
 
+`waypoints` and `heading` steer the loop (both optional; absent = an unguided
+route exactly as above). `waypoints` is up to 3 `[lon, lat]` pins the route
+passes through (a body array on `POST`, `lon,lat;lon,lat` on `GET`); each must
+be within 0.75 × the target distance of `start`. `heading` is degrees from 0 to
+360 (0 = north, clockwise) that the loop should head toward. Pins alone are
+visited in a short tour order; a lone pin still gets a loop, not an
+out-and-back. A heading alone makes a triangle loop pointing that way. With
+both, the pins are fixed and the heading picks the side the loop bulges toward.
+Trail Router only honours pins on point-to-point requests, so the server adds
+anchor points and tunes them over up to 8 requests (inside a 15 s budget) until
+the length is within ±7% of the target. If the pins alone force a length outside
+that, the route is still returned with a `warnings` entry giving the real length.
+Invalid pins or heading are a `400`. The response then carries
+`guided: { waypoints, heading, requests, distanceMeters }`. `variant` moves the
+anchors (bulge position and side, heading spread) without breaking pin-through
+routing.
+
 `coordinates` is the chosen route as `[lon, lat, ele?]` points, so a client can
 draw it without parsing the GPX. The response also carries a `previewUrl` — a short link
 (`/api/preview?id=…`, backed by a KV store, 30-day expiry) to a Leaflet map of

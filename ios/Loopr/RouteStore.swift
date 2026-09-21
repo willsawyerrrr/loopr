@@ -18,13 +18,14 @@ enum RouteStore {
     /// Saves a route. With an `eventKey`, the route for that calendar run is updated in place if one exists.
     @discardableResult
     static func save(
-        response: RouteResponse, points: [RoutePoint], name: String? = nil, eventKey: String? = nil
+        response: RouteResponse, points: [RoutePoint], name: String? = nil, eventKey: String? = nil,
+        shape: RouteShape? = nil
     ) -> SavedRoute {
         let route: SavedRoute
         if let eventKey, let existing = self.route(forEventKey: eventKey) {
             existing.update(
                 targetDistanceKm: response.targetDistanceKm, summary: response.route, previewUrl: response.previewUrl,
-                points: points, warnings: response.warnings)
+                points: points, warnings: response.warnings, shape: shape)
             route = existing
         } else {
             route = SavedRoute(
@@ -34,7 +35,8 @@ enum RouteStore {
                 previewUrl: response.previewUrl,
                 points: points,
                 warnings: response.warnings,
-                eventKey: eventKey
+                eventKey: eventKey,
+                shape: shape
             )
             container.mainContext.insert(route)
         }

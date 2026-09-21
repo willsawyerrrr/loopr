@@ -9,6 +9,9 @@ struct GenerateView: View {
 
     @State private var phase = Phase.idle
     @State private var savedID: UUID?
+    @State private var shape = RouteShape()
+    @State private var usedShape = RouteShape()
+    @State private var showShape = false
 
     private let service = RouteService()
     private let location = LocationProvider()
@@ -29,6 +32,7 @@ struct GenerateView: View {
                             LabeledContent("Distance", value: "\(distanceKm.formatted(.number.precision(.fractionLength(0...1)))) km")
                         }
                         PreferenceSliders()
+                        ShapeRow(shape: shape) { showShape = true }
                         Button(action: generate) {
                             HStack {
                                 Text("Generate route from here")
@@ -56,6 +60,7 @@ struct GenerateView: View {
                 }
             }
             .navigationTitle("Loopr")
+            .sheet(isPresented: $showShape) { ShapeSheet(shape: $shape, targetKm: distanceKm) }
         }
     }
 
@@ -70,7 +75,7 @@ struct GenerateView: View {
     @ViewBuilder
     private func result(_ response: RouteResponse, _ points: [RoutePoint]) -> some View {
         Section {
-            RouteMapView(points: points, interactive: false)
+            RouteMapView(points: points, pins: usedShape.pins, interactive: false)
                 .frame(height: 300)
                 .listRowInsets(EdgeInsets())
                 .id("result")
@@ -107,6 +112,7 @@ struct GenerateView: View {
         let regenerate = if case .done = phase { true } else { false }
         phase = .loading
         savedID = nil
+        usedShape = shape
         Task {
             do {
                 let coordinate = try await location.currentCoordinate()
@@ -118,6 +124,7 @@ struct GenerateView: View {
                     hillsPreference: hills,
                     greenPreference: green
                 )
+                request = usedShape.applied(to: request)
                 if regenerate { request = request.regenerated() }
                 let response = try await service.generate(request)
                 let points = response.resolvedPoints()
@@ -129,6 +136,6 @@ struct GenerateView: View {
     }
 
     private func save(_ response: RouteResponse, _ points: [RoutePoint]) {
-        savedID = RouteStore.save(response: response, points: points).id
+        savedID = RouteStore.save(response: response, points: points, shape: usedShape).id
     }
 }

@@ -90,8 +90,8 @@ GET only; all parameters on the query string.
 
 | Param | Type / range | Meaning |
 |---|---|---|
-| `coordinates` | string, pipe-separated `lon,lat` pairs | Waypoints. Roundtrip: a single coordinate suffices. |
-| `roundtrip` | boolean | `true` = starts and finishes at coordinate 0; other coords ignored. |
+| `coordinates` | string, pipe-separated `lon,lat` pairs (`%7C`; semicolons fail with "Cannot parse point") | Waypoints. Roundtrip: a single coordinate suffices. |
+| `roundtrip` | boolean | `true` = starts and finishes at coordinate 0; other coords are not reliably honoured (see below). `false` = routes through every coordinate in order. |
 | `target_distance` | integer, metres | Desired length. `0` = direct route. |
 | `green_preference` | double, `0`..`1` | `1` = very green, `0` = no preference. |
 | `hills_preference` | double, `-1`..`1` | `-1` avoid, `0` neutral, `1` prefer. |
@@ -139,6 +139,17 @@ GET only; all parameters on the query string.
   carried into the GPX `<ele>`.
 - Hilliness is derived locally as `ascent / (distance / 1000)` m/km and banded
   per §1: `< 10` flat, `10–25` rolling, `> 25` hilly.
+- **Steering through pins** (verified live, Sydney start, 5 km): `roundtrip=true`
+  with extra coordinates returns ~10 loops of about `target_distance` from the
+  first coordinate and ignores the rest — across the candidates the closest
+  approach to the extra pin ranged from 4 m (by chance) to ~1 km, and the best of
+  the ten was sometimes 156 m away. `roundtrip=false` with `start|pin1|…|start` does route
+  through every pin in order (closest approach ≤ 10 m in the checks) and returns
+  a single route with its own shortest-path length; `target_distance` has no
+  effect (5 000 and 9 000 m gave the same 5 246 m route) and it answers in
+  ~250–900 ms. Reaching a target length therefore means adding anchor points and
+  measuring; a point Trail Router cannot route to returns `400` ("Point 1 is too
+  far from Point 0"). The output shape is the same as the round trip's.
 - **No GPX output** — JSON only. Conversion is the function's job.
 - **No authentication**, no documented rate limits, no published API terms or
   attribution demand. Treat as best-effort courtesy use: one call per planned

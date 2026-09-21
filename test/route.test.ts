@@ -403,3 +403,148 @@ describe("POST /api/route — variant", () => {
     }
   });
 });
+
+describe("POST /api/route — waypoints and heading", () => {
+  /** A router whose route length is 1.25 x the polyline through the requested coordinates. */
+  const fakeGuidedRouter = () => {
+    const impl = vi.fn(async (url: string, _opts?: RequestInit): Promise<Response> => {
+      const params = new URL(url).searchParams;
+      const points = params
+        .get("coordinates")!
+        .split("|")
+        .map((pair) => pair.split(",").map(Number) as [number, number]);
+      let metres = 0;
+      for (let i = 1; i < points.length; i++) {
+        const dx = (points[i]![0] - points[i - 1]![0]) * 111_320 * Math.cos((START[1] * Math.PI) / 180);
+        const dy = (points[i]![1] - points[i - 1]![1]) * 111_320;
+        metres += Math.hypot(dx, dy);
+      }
+      return new Response(
+        JSON.stringify({
+          routes: [
+            {
+              distance: metres * 1.25,
+              geometry: { coordinates: points },
+              ascent: 0,
+              descent: 0,
+              weight: 1,
+              greenScore: 0,
+            },
+          ],
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", impl);
+    return impl;
+  };
+  const PIN: [number, number] = [START[0] + 0.008, START[1] + 0.006];
+  const post = (extra: Record<string, unknown>) =>
+    POST(postRequest({ targetDistanceKm: 5, start: START, ...extra }));
+
+  it("without waypoints or heading sends one round-trip request and no `guided`", async () => {
+    const impl = stubRouter(ROUTER_BODY);
+    const json = await readJson(await post({}));
+    expect(impl).toHaveBeenCalledTimes(1);
+    const params = new URL(impl.mock.calls[0]![0]).searchParams;
+    expect(params.get("roundtrip")).toBe("true");
+    expect(params.get("target_distance")).toBe("5000");
+    expect(json.guided).toBeUndefined();
+    expect((await readJson(await post({ waypoints: [], heading: undefined }))).guided).toBeUndefined();
+  });
+
+  it("routes through a pin and reports `guided`", async () => {
+    const impl = fakeGuidedRouter();
+    const json = await readJson(await post({ waypoints: [PIN] }));
+    expect(json.guided.waypoints).toEqual([PIN]);
+    expect(json.guided.heading).toBeNull();
+    expect(json.guided.requests).toBe(impl.mock.calls.length);
+    expect(json.guided.requests).toBeLessThanOrEqual(8);
+    expect(Math.abs(json.guided.distanceMeters - 5000)).toBeLessThan(350);
+    expect(json.route.distanceKm).toBe(Math.round(json.guided.distanceMeters / 10) / 100);
+    const sent = new URL(impl.mock.calls[0]![0]).searchParams;
+    expect(sent.get("roundtrip")).toBe("false");
+    expect(sent.get("coordinates")).toContain(`${PIN[0]},${PIN[1]}`);
+    expect(json.coordinates).toContainEqual(PIN);
+  });
+
+  it("routes toward a heading", async () => {
+    fakeGuidedRouter();
+    const json = await readJson(await post({ heading: 90 }));
+    expect(json.guided.heading).toBe(90);
+    expect(json.guided.waypoints).toEqual([]);
+    const lons = json.coordinates.map((c: number[]) => c[0]);
+    expect(Math.max(...lons) - START[0]).toBeGreaterThan(START[0] - Math.min(...lons));
+  });
+
+  it("combines pins, heading, preferences and variant", async () => {
+    const impl = fakeGuidedRouter();
+    const json = await readJson(
+      await post({ waypoints: [PIN], heading: 300, hillsPreference: 0.5, greenPreference: 0.3, variant: 4 }),
+    );
+    expect(json.variant).toBe(4);
+    expect(json.guided.heading).toBe(300);
+    const params = new URL(impl.mock.calls[0]![0]).searchParams;
+    expect(params.get("hills_preference")).toBe("0.5");
+    expect(params.get("green_preference")).toBe("0.3");
+    expect(params.get("coordinates")!.split("|")[0]).toBe(`${START[0]},${START[1]}`);
+    expect(json.coordinates).toContainEqual(PIN);
+  });
+
+  it("works with a Runna workout", async () => {
+    fakeGuidedRouter();
+    const res = await POST(postRequest({ workout: SAMPLE_A, start: START, heading: 45 }));
+    expect(res.status).toBe(200);
+    expect((await readJson(res)).guided.requests).toBeGreaterThan(0);
+  });
+
+  it("warns when pins force a length off target", async () => {
+    fakeGuidedRouter();
+    const far: [number, number] = [START[0] + 0.028, START[1]];
+    const json = await readJson(await post({ waypoints: [far, [START[0], START[1] + 0.028]], targetDistanceKm: 5 }));
+    expect(json.warnings.join()).toMatch(/Your pins make this route .* km against a 5\.0 km target/);
+  });
+
+  it("GET accepts `waypoints=lon,lat;lon,lat` and `heading`", async () => {
+    const impl = fakeGuidedRouter();
+    const other = [START[0] - 0.006, START[1] + 0.004];
+    const res = await GET(
+      new Request(
+        `https://x/api/route?distanceKm=5&start=${START.join(",")}&heading=200&waypoints=${PIN.join(",")};${other.join(",")}`,
+      ),
+    );
+    const json = await readJson(res);
+    expect(json.guided.waypoints).toEqual([PIN, other]);
+    expect(json.guided.heading).toBe(200);
+    expect(impl).toHaveBeenCalled();
+  });
+
+  it("400 on invalid waypoints or heading", async () => {
+    fakeGuidedRouter();
+    const bads: Record<string, unknown>[] = [
+      { waypoints: "nope" },
+      { waypoints: [[1]] },
+      { waypoints: [[181, 0]] },
+      { waypoints: [PIN, PIN, PIN, PIN] },
+      { waypoints: [[START[0] + 0.5, START[1]]] },
+      { waypoints: [[Number.NaN, 1]] },
+      { heading: -1 },
+      { heading: 361 },
+      { heading: "east" },
+    ];
+    for (const bad of bads) {
+      const res = await post(bad);
+      expect(res.status, JSON.stringify(bad)).toBe(400);
+      expect((await readJson(res)).error).toMatch(/waypoint|heading/i);
+    }
+    for (const q of ["waypoints=1", "waypoints=a,b", "heading=x", "heading=400"]) {
+      const res = await GET(new Request(`https://x/api/route?distanceKm=5&start=${START.join(",")}&${q}`));
+      expect(res.status, q).toBe(400);
+    }
+  });
+
+  it("502 when Trail Router fails on a guided request", async () => {
+    stubRouter("oops", { status: 500 });
+    const res = await post({ heading: 90 });
+    expect(res.status).toBe(502);
+  });
+});

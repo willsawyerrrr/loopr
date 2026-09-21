@@ -44,6 +44,31 @@ function parseVariant(value: unknown): number | null | undefined {
 
 const INVALID_VARIANT = { error: "`variant` must be a non-negative integer" };
 
+/** `[[lon, lat], …]` or `"lon,lat;lon,lat"`. `undefined` when absent, `null` when malformed. */
+function parseWaypoints(value: unknown): [number, number][] | null | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const items = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(";")
+      : null;
+  if (!items) return null;
+  const points = items.map(parseStart);
+  return points.every((p) => p !== null) ? points : null;
+}
+
+/** `undefined` when absent, `null` when not a number. Range is checked with the route. */
+function parseHeading(value: unknown): number | null | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const n = typeof value === "string" ? Number(value) : value;
+  return typeof n === "number" && Number.isFinite(n) ? n : null;
+}
+
+const INVALID_WAYPOINTS = {
+  error: "`waypoints` must be `[lon, lat]` pairs (`lon,lat;lon,lat` in a query string)",
+};
+const INVALID_HEADING = { error: "`heading` must be a number of degrees from 0 to 360" };
+
 function mergePaces(overrides: unknown): Record<string, number> {
   const merged: Record<string, number> = { ...DEFAULT_PACES };
   if (overrides && typeof overrides === "object") {
@@ -134,6 +159,11 @@ export async function POST(request: Request): Promise<Response> {
   const variant = parseVariant(body["variant"]);
   if (variant === null) return json(INVALID_VARIANT, 400);
 
+  const waypoints = parseWaypoints(body["waypoints"]);
+  if (waypoints === null) return json(INVALID_WAYPOINTS, 400);
+  const heading = parseHeading(body["heading"]);
+  if (heading === null) return json(INVALID_HEADING, 400);
+
   const hasWorkout = typeof body["workout"] === "string" && body["workout"].trim() !== "";
   const hasManual = typeof body["targetDistanceKm"] === "number";
   if (!hasWorkout && !hasManual) {
@@ -150,6 +180,8 @@ export async function POST(request: Request): Promise<Response> {
       ...(typeof body["title"] === "string" ? { title: body["title"] } : {}),
       ...(typeof body["date"] === "string" ? { date: body["date"] } : {}),
       ...(variant !== undefined ? { variant } : {}),
+      ...(waypoints !== undefined ? { waypoints } : {}),
+      ...(heading !== undefined ? { heading } : {}),
       config: buildConfig(
         start,
         body["hillsPreference"],
@@ -178,12 +210,19 @@ export async function GET(request: Request): Promise<Response> {
   const variant = parseVariant(params.get("variant") ?? undefined);
   if (variant === null) return json(INVALID_VARIANT, 400);
 
+  const waypoints = parseWaypoints(params.get("waypoints") ?? undefined);
+  if (waypoints === null) return json(INVALID_WAYPOINTS, 400);
+  const heading = parseHeading(params.get("heading") ?? undefined);
+  if (heading === null) return json(INVALID_HEADING, 400);
+
   return run(
     {
       targetDistanceKm: distanceKm,
       ...(params.get("title") ? { title: params.get("title")! } : {}),
       ...(params.get("date") ? { date: params.get("date")! } : {}),
       ...(variant !== undefined ? { variant } : {}),
+      ...(waypoints !== undefined ? { waypoints } : {}),
+      ...(heading !== undefined ? { heading } : {}),
       config: buildConfig(
         start,
         params.has("hills") ? Number(params.get("hills")) : undefined,
