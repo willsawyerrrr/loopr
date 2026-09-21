@@ -1,5 +1,6 @@
 import { DEFAULTS, type RouteConfig } from "./config.js";
-import { fetchRoutes } from "./trailrouter.js";
+import { fetchRoutes, type TrailRouterRoute } from "./trailrouter.js";
+import { generateGuided, GuidanceError, validateGuidance, type LonLat } from "./guided.js";
 import { chooseCandidate, nudgeStart } from "./variation.js";
 import { lineStringToGpx } from "./gpx.js";
 import { parseWorkout, type ParsedWorkout, type Segment } from "./workout.js";
@@ -34,6 +35,15 @@ export interface RouteResult {
   warnings: string[];
   /** The applied `variant`; `0` is the closest-to-target route. */
   variant: number;
+  /** Present when `waypoints` or `heading` steered the route. */
+  guided?: {
+    waypoints: LonLat[];
+    /** Degrees in `[0, 360)`, or `null` when only pins were given. */
+    heading: number | null;
+    /** Trail Router requests issued to reach the target distance. */
+    requests: number;
+    distanceMeters: number;
+  };
 }
 
 export interface GenerateRouteInput {
@@ -47,6 +57,10 @@ export interface GenerateRouteInput {
   date?: string;
   /** Non-negative integer. `0` or absent picks the closest-to-target route; `> 0` picks a seeded, different one. */
   variant?: number;
+  /** Up to `DEFAULTS.guided.maxWaypoints` `[lon, lat]` pins the route passes through. */
+  waypoints?: LonLat[];
+  /** Degrees, `0` = north, clockwise, in `[0, 360]`: the direction the loop should head toward. */
+  heading?: number;
   config: RouteConfig;
 }
 
@@ -91,6 +105,7 @@ export async function generateRoute(
   fetchImpl?: typeof fetch,
 ): Promise<RouteResult> {
   const { workout, targetDistanceKm, title, date, config, variant = 0 } = input;
+  const { waypoints, heading } = input;
   const hasWorkout = typeof workout === "string" && workout.trim().length > 0;
   const hasManual = typeof targetDistanceKm === "number" && Number.isFinite(targetDistanceKm);
 
@@ -126,16 +141,50 @@ export async function generateRoute(
     targetMeters = targetDistanceKm! * 1000;
   }
 
-  const routes = await fetchRoutes(
-    {
-      start: variant > 0 ? nudgeStart(config.start, variant) : config.start,
-      targetDistanceMeters: targetMeters,
-      hillsPreference: config.hillsPreference ?? DEFAULTS.hillsPreference,
-      greenPreference: config.greenPreference ?? DEFAULTS.greenPreference,
-    },
-    fetchImpl,
-  );
-  const best = chooseCandidate(routes, targetMeters, variant);
+  const hillsPreference = config.hillsPreference ?? DEFAULTS.hillsPreference;
+  const greenPreference = config.greenPreference ?? DEFAULTS.greenPreference;
+  let best: TrailRouterRoute;
+  let guided: RouteResult["guided"];
+
+  if ((waypoints && waypoints.length > 0) || (heading !== undefined && heading !== null)) {
+    let guidance;
+    try {
+      guidance = validateGuidance(config.start, targetMeters, waypoints, heading);
+    } catch (err) {
+      if (err instanceof GuidanceError) throw new RouteInputError(err.message);
+      throw err;
+    }
+    const result = await generateGuided(
+      {
+        start: config.start,
+        targetMeters,
+        guidance,
+        hillsPreference,
+        greenPreference,
+        variant,
+      },
+      fetchImpl,
+    );
+    best = result.route;
+    warnings.push(...result.warnings);
+    guided = {
+      waypoints: guidance.waypoints,
+      heading: guidance.heading,
+      requests: result.requests,
+      distanceMeters: Math.round(best.distanceMeters),
+    };
+  } else {
+    const routes = await fetchRoutes(
+      {
+        start: variant > 0 ? nudgeStart(config.start, variant) : config.start,
+        targetDistanceMeters: targetMeters,
+        hillsPreference,
+        greenPreference,
+      },
+      fetchImpl,
+    );
+    best = chooseCandidate(routes, targetMeters, variant);
+  }
 
   if (best.overriddenParameters && Object.keys(best.overriddenParameters).length > 0) {
     warnings.push(
@@ -176,5 +225,6 @@ export async function generateRoute(
     checksum,
     warnings,
     variant,
+    ...(guided ? { guided } : {}),
   };
 }

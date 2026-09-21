@@ -96,6 +96,27 @@ describe("fetchRoutes — request construction", () => {
   });
 });
 
+describe("fetchRoutes — through points", () => {
+  it("sends a point-to-point request start|points|start without a target distance", async () => {
+    const fetchImpl = mockFetch(SAMPLE_RESPONSE);
+    const through: [number, number][] = [
+      [-0.12, 51.51],
+      [-0.13, 51.5],
+    ];
+    await fetchRoutes({ ...QUERY, through }, fetchImpl as unknown as typeof fetch);
+
+    const url = fetchImpl.mock.calls[0]![0];
+    expect(url).toContain("%7C");
+    const params = new URL(url).searchParams;
+    expect(params.get("coordinates")).toBe(
+      "-0.1278,51.5074|-0.12,51.51|-0.13,51.5|-0.1278,51.5074",
+    );
+    expect(params.get("roundtrip")).toBe("false");
+    expect(params.has("target_distance")).toBe(false);
+    expect(params.get("green_preference")).toBe("0.5");
+  });
+});
+
 describe("fetchRoutes — defensive parse", () => {
   it("parses the real schema, preserves elevation, closest-to-target first", async () => {
     const routes = await fetchRoutes(
