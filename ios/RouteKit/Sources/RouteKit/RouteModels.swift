@@ -16,6 +16,10 @@ public struct RouteRequest: Encodable, Sendable {
     public var paces: [String: Double]?
     /// Asks the server for a different loop than the one a request without it returns; omitted when `nil`.
     public var variant: Int?
+    /// Points the loop should pass through, in `[lon, lat]` order; omitted when `nil`.
+    public var waypoints: [RoutePoint]?
+    /// Degrees clockwise from north the loop should head toward; omitted when `nil`.
+    public var heading: Double?
 
     public init(
         targetDistanceKm: Double,

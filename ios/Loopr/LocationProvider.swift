@@ -1,4 +1,5 @@
 import CoreLocation
+import RouteKit
 
 enum LocationError: LocalizedError {
     case denied
@@ -25,5 +26,10 @@ struct LocationProvider {
             }
         }
         throw LocationError.unavailable
+    }
+
+    func currentPoint() async throws -> RoutePoint {
+        let coordinate = try await currentCoordinate()
+        return RoutePoint(longitude: coordinate.longitude, latitude: coordinate.latitude)
     }
 }

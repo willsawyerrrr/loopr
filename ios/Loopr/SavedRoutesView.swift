@@ -47,7 +47,7 @@ struct RouteDetailView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            RouteMapView(points: route.points)
+            RouteMapView(points: route.points, pins: route.shape?.pins ?? [])
             RouteStatsView(
                 distanceKm: route.distanceKm,
                 ascentM: route.ascentM,

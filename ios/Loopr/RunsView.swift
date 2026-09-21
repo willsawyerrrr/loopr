@@ -128,6 +128,8 @@ struct RunDetailView: View {
     @State private var generating = false
     @State private var errorMessage: String?
     @State private var showSettings = false
+    @State private var editedShape: RouteShape?
+    @State private var showShape = false
 
     init(run: PlannedRun) {
         self.run = run
@@ -137,11 +139,14 @@ struct RunDetailView: View {
 
     private var route: SavedRoute? { routes.first }
 
+    /// The shape chosen in the sheet, else the saved route's.
+    private var shape: RouteShape { editedShape ?? route?.shape ?? RouteShape() }
+
     var body: some View {
         Form {
             if let route {
                 Section {
-                    RouteMapView(points: route.points, interactive: false)
+                    RouteMapView(points: route.points, pins: route.shape?.pins ?? [], interactive: false)
                         .frame(height: 300)
                         .listRowInsets(EdgeInsets())
                     RouteStatsView(
@@ -169,6 +174,7 @@ struct RunDetailView: View {
                 Section { Label(errorMessage, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
             }
             Section {
+                ShapeRow(shape: shape) { showShape = true }
                 Button(route == nil ? "Generate route" : "Regenerate", systemImage: "arrow.clockwise") {
                     generate(regenerate: route != nil)
                 }
@@ -179,6 +185,9 @@ struct RunDetailView: View {
         .navigationTitle(run.title)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showShape) {
+            ShapeSheet(shape: Binding(get: { shape }, set: { editedShape = $0 }), targetKm: route?.targetDistanceKm)
+        }
         .task { if route == nil { generate(regenerate: false) } }
     }
 
@@ -188,7 +197,7 @@ struct RunDetailView: View {
         errorMessage = nil
         Task {
             do {
-                _ = try await RunPreparation.prepare(run, regenerate: regenerate)
+                _ = try await RunPreparation.prepare(run, regenerate: regenerate, shape: shape)
             } catch {
                 errorMessage = error.localizedDescription
             }

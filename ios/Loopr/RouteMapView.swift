@@ -4,6 +4,8 @@ import SwiftUI
 
 struct RouteMapView: View {
     let points: [RoutePoint]
+    /// Shaping pins to number on the route.
+    var pins: [RoutePoint] = []
     var interactive = true
 
     var body: some View {
@@ -17,6 +19,9 @@ struct RouteMapView: View {
                         .font(.title)
                         .foregroundStyle(.white, .green)
                 }
+            }
+            ForEach(Array(pins.enumerated()), id: \.offset) { index, pin in
+                Annotation("", coordinate: pin.coordinate) { PinMarker(number: index + 1) }
             }
         }
         .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
