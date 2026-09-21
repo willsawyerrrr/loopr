@@ -134,7 +134,9 @@ refresh (`BGAppRefreshTask`, `dev.willsawyerrrr.Loopr.refresh`) for the next
 06:00 local. When it runs, it generates the route for today's run (or the next
 one) if it doesn't have one, saves it, and posts a notification "Route ready:
 `<title>` · `<distance>`". Turning the setting on asks for notification
-permission. Each run reschedules the next.
+permission. The request is submitted each time the app moves to the background
+(the scene's handler must be registered first, so it is never submitted while
+launching), and each run reschedules the next.
 
 iOS decides when background refreshes happen and may run them late or not at
 all, notably if the app is rarely opened or Low Power Mode is on. Without a
