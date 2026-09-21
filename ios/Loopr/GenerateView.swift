@@ -104,20 +104,22 @@ struct GenerateView: View {
     }
 
     private func generate() {
+        let regenerate = if case .done = phase { true } else { false }
         phase = .loading
         savedID = nil
         Task {
             do {
                 let coordinate = try await location.currentCoordinate()
                 LastStartStore().save(RoutePoint(longitude: coordinate.longitude, latitude: coordinate.latitude))
-                let response = try await service.generate(
-                    RouteRequest(
-                        targetDistanceKm: distanceKm,
-                        startLongitude: coordinate.longitude,
-                        startLatitude: coordinate.latitude,
-                        hillsPreference: hills,
-                        greenPreference: green
-                    ))
+                var request = RouteRequest(
+                    targetDistanceKm: distanceKm,
+                    startLongitude: coordinate.longitude,
+                    startLatitude: coordinate.latitude,
+                    hillsPreference: hills,
+                    greenPreference: green
+                )
+                if regenerate { request = request.regenerated() }
+                let response = try await service.generate(request)
                 let points = response.resolvedPoints()
                 phase = points.isEmpty ? .failed("The route had no geometry.") : .done(response, points)
             } catch {

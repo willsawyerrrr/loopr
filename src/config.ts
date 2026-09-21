@@ -17,6 +17,10 @@ export const DEFAULTS = {
   avoidUnlitStreets: true,
   /** Minutes per km applied when a run phrase is not in `paces`. */
   fallbackRunPaceMinPerKm: 7.5,
+  /** Fraction of the target distance a candidate may differ by and still be eligible for a seeded (`variant > 0`) pick. */
+  variantTolerance: 0.05,
+  /** Bounds, in metres, of the seeded offset applied to the start when asking Trail Router for a `variant > 0` route. */
+  variantNudgeMeters: { min: 40, max: 120 },
 } as const;
 
 export const DEFAULT_PACES: Record<string, number> = {

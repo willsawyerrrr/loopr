@@ -1,5 +1,6 @@
 import { DEFAULTS, type RouteConfig } from "./config.js";
-import { fetchRoutes, pickBest } from "./trailrouter.js";
+import { fetchRoutes } from "./trailrouter.js";
+import { chooseCandidate, nudgeStart } from "./variation.js";
 import { lineStringToGpx } from "./gpx.js";
 import { parseWorkout, type ParsedWorkout, type Segment } from "./workout.js";
 
@@ -31,6 +32,8 @@ export interface RouteResult {
   segments: Segment[];
   checksum: ParsedWorkout["checksum"];
   warnings: string[];
+  /** The applied `variant`; `0` is the closest-to-target route. */
+  variant: number;
 }
 
 export interface GenerateRouteInput {
@@ -42,6 +45,8 @@ export interface GenerateRouteInput {
   title?: string;
   /** ISO date for the filename. */
   date?: string;
+  /** Non-negative integer. `0` or absent picks the closest-to-target route; `> 0` picks a seeded, different one. */
+  variant?: number;
   config: RouteConfig;
 }
 
@@ -85,7 +90,7 @@ export async function generateRoute(
   input: GenerateRouteInput,
   fetchImpl?: typeof fetch,
 ): Promise<RouteResult> {
-  const { workout, targetDistanceKm, title, date, config } = input;
+  const { workout, targetDistanceKm, title, date, config, variant = 0 } = input;
   const hasWorkout = typeof workout === "string" && workout.trim().length > 0;
   const hasManual = typeof targetDistanceKm === "number" && Number.isFinite(targetDistanceKm);
 
@@ -123,14 +128,14 @@ export async function generateRoute(
 
   const routes = await fetchRoutes(
     {
-      start: config.start,
+      start: variant > 0 ? nudgeStart(config.start, variant) : config.start,
       targetDistanceMeters: targetMeters,
       hillsPreference: config.hillsPreference ?? DEFAULTS.hillsPreference,
       greenPreference: config.greenPreference ?? DEFAULTS.greenPreference,
     },
     fetchImpl,
   );
-  const best = pickBest(routes, targetMeters);
+  const best = chooseCandidate(routes, targetMeters, variant);
 
   if (best.overriddenParameters && Object.keys(best.overriddenParameters).length > 0) {
     warnings.push(
@@ -170,5 +175,6 @@ export async function generateRoute(
     segments,
     checksum,
     warnings,
+    variant,
   };
 }

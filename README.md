@@ -12,8 +12,17 @@ candidate closest to that distance, and converts it to a GPX 1.1 track.
 `GET`/`POST` `/api/route` returns JSON by default:
 
 ```json
-{ "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "coordinates": [], "segments": [], "checksum": {}, "warnings": [] }
+{ "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "coordinates": [], "segments": [], "checksum": {}, "warnings": [], "variant": 0 }
 ```
+
+`variant` is an optional non-negative integer (a body field on `POST`, a query
+param on `GET`; anything else is a `400`). Absent or `0` returns the candidate
+closest to the target distance, and identical requests return identical routes.
+For `variant > 0` the server seeds a PRNG from it, nudges the start Trail Router
+is asked about by 40–120 m in a seeded direction, and picks one of the candidates
+within ±5% of the target (the closest when none qualify). The same `variant`
+repeats the same choice; a different one gives a different loop. The response
+carries the applied `variant`.
 
 `coordinates` is the chosen route as `[lon, lat, ele?]` points, so a client can
 draw it without parsing the GPX. The response also carries a `previewUrl` — a short link

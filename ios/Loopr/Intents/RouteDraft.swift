@@ -41,17 +41,18 @@ actor DraftStore {
 }
 
 enum RouteGenerator {
-    /// Generates a loop with the app's hills/green preferences and stores it as a draft. Must finish within the ~30 s intent budget.
-    static func makeDraft(targetKm: Double, start: RoutePoint) async throws -> RouteDraft {
+    /// Generates a loop with the app's hills/green preferences and stores it as a draft; `regenerate` asks for a different loop than a plain request returns. Must finish within the ~30 s intent budget.
+    static func makeDraft(targetKm: Double, start: RoutePoint, regenerate: Bool = false) async throws -> RouteDraft {
         let defaults = UserDefaults.standard
-        let response = try await RouteService(timeout: 25).generate(
-            RouteRequest(
-                targetDistanceKm: targetKm,
-                startLongitude: start.longitude,
-                startLatitude: start.latitude,
-                hillsPreference: defaults.double(forKey: "hillsPreference"),
-                greenPreference: defaults.double(forKey: "greenPreference")
-            ))
+        var request = RouteRequest(
+            targetDistanceKm: targetKm,
+            startLongitude: start.longitude,
+            startLatitude: start.latitude,
+            hillsPreference: defaults.double(forKey: "hillsPreference"),
+            greenPreference: defaults.double(forKey: "greenPreference")
+        )
+        if regenerate { request = request.regenerated() }
+        let response = try await RouteService(timeout: 25).generate(request)
         let points = response.resolvedPoints()
         guard !points.isEmpty else { throw RouteDraftError.noGeometry }
         var draft = RouteDraft(

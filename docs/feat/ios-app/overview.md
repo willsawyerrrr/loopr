@@ -17,7 +17,9 @@ ios/
 - **`RouteKit`** holds everything the UI and the App Intents share:
   - `RouteService` — `generate(_:)` posts either a manual target distance or a
     Runna workout (`workout`, `title`, `date`, `paces`), plus the start
-    `[lon, lat]` and the hills/green preferences.
+    `[lon, lat]` and the hills/green preferences. `RouteRequest.regenerated()`
+    adds a random `variant` (1–1,000,000) so the server returns a different loop
+    than the last one; first generations send none.
   - `RunPlan` / `CalendarEvent` / `PlannedRun` — the pure calendar logic, with no
     EventKit import: picks all-day events in `[start of today, +8 days)`
     earliest first, builds the workout request from an event, chooses the
@@ -42,7 +44,9 @@ ios/
   (distance, hills, green, current location as start, map, save, share GPX) and
   a *Saved* tab (list, detail map, swipe to delete, share GPX). The EventKit
   adapter (`RunCalendar`), route generation for a run (`RunPreparation`) and the
-  background refresh (`MorningRefresh`) live here.
+  background refresh (`MorningRefresh`) live here. Generating again on the
+  *Generate* tab, *Regenerate* on a run and the snippet's **Regenerate** all send
+  a fresh `variant`.
 
 ## Runs tab
 
@@ -63,8 +67,8 @@ once a route exists it also shows the distance and a checkmark.
   *Share GPX* and *Regenerate* are shown. A run with no Notes reports that it
   has no workout.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
-  event identifier plus date), and appears in *Saved* too. *Regenerate* updates
-  that same saved route.
+  event identifier plus date), and appears in *Saved* too. *Regenerate* sends a
+  fresh `variant` and updates that same saved route with a different loop.
 
 ## Settings
 
@@ -117,7 +121,7 @@ Shortcut). *"Open `<route>` in Loopr"* opens a saved route.
 
 - **Snippet:** the map is a `MKMapSnapshotter` image with the route drawn on it
   (a live `Map` renders blank in a snippet). **Save** stores the route without
-  opening the app; **Regenerate** produces a new loop for the same distance.
+  opening the app; **Regenerate** produces a different loop for the same distance (a fresh `variant` each tap).
   Generated routes are held in memory until saved, so a route that has sat
   unsaved after the app process exits must be re-requested.
 - **Start point:** the current location when a fix arrives in time, otherwise

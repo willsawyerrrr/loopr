@@ -67,7 +67,7 @@ struct RegenerateRouteIntent: AppIntent {
     func perform() async throws -> some IntentResult & ShowsSnippetIntent {
         guard let id = UUID(uuidString: draftID) else { throw RouteDraftError.expired }
         let old = try await DraftStore.shared.draft(id)
-        let draft = try await RouteGenerator.makeDraft(targetKm: old.targetKm, start: old.start)
+        let draft = try await RouteGenerator.makeDraft(targetKm: old.targetKm, start: old.start, regenerate: true)
         return .result(snippetIntent: RoutePreviewSnippetIntent(draftID: draft.id))
     }
 }

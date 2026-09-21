@@ -15,13 +15,14 @@ enum RunPreparation {
         if !regenerate, let existing = RouteStore.route(forEventKey: run.key) { return existing }
         let start = try await StartResolver(timeout: .seconds(background ? 3 : 8)).resolve { try await currentPoint() }
         let defaults = UserDefaults.standard
-        let request = try RunPlan.request(
+        var request = try RunPlan.request(
             for: run,
             start: start.point,
             hillsPreference: defaults.double(forKey: "hillsPreference"),
             greenPreference: defaults.double(forKey: "greenPreference"),
             paces: PaceStore().paces
         )
+        if regenerate { request = request.regenerated() }
         let response = try await RouteService(timeout: background ? 25 : 60).generate(request)
         let points = response.resolvedPoints()
         guard !points.isEmpty else { throw RouteDraftError.noGeometry }
