@@ -16,7 +16,10 @@ public final class SavedRoute {
     public var hilliness: String
     public var greenScore: Double
     public var previewUrl: String?
+    /// The `PlannedRun.key` this route was generated for, when it came from a calendar run.
+    public var eventKey: String?
     private var pointsData: Data
+    private var warningsData: Data?
 
     public init(
         name: String,
@@ -24,6 +27,8 @@ public final class SavedRoute {
         summary: RouteSummary,
         previewUrl: String?,
         points: [RoutePoint],
+        warnings: [String] = [],
+        eventKey: String? = nil,
         createdAt: Date = .now
     ) {
         self.id = UUID()
@@ -37,7 +42,30 @@ public final class SavedRoute {
         self.hilliness = summary.hilliness
         self.greenScore = summary.greenScore
         self.previewUrl = previewUrl
+        self.eventKey = eventKey
         self.pointsData = (try? JSONEncoder().encode(points)) ?? Data()
+        self.warningsData = try? JSONEncoder().encode(warnings)
+    }
+
+    /// Replaces the route's geometry and metrics, keeping its identity, name and event.
+    public func update(
+        targetDistanceKm: Double, summary: RouteSummary, previewUrl: String?, points: [RoutePoint], warnings: [String]
+    ) {
+        self.targetDistanceKm = targetDistanceKm
+        distanceKm = summary.distanceKm
+        ascentM = summary.ascentM
+        descentM = summary.descentM
+        elevationGainPerKm = summary.elevationGainPerKm
+        hilliness = summary.hilliness
+        greenScore = summary.greenScore
+        self.previewUrl = previewUrl
+        pointsData = (try? JSONEncoder().encode(points)) ?? Data()
+        warningsData = try? JSONEncoder().encode(warnings)
+    }
+
+    /// The server warnings from when the route was generated.
+    public var warnings: [String] {
+        warningsData.flatMap { try? JSONDecoder().decode([String].self, from: $0) } ?? []
     }
 
     public var points: [RoutePoint] {

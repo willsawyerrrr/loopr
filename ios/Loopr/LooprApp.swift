@@ -5,6 +5,7 @@ import SwiftUI
 struct LooprApp: App {
     init() {
         LooprShortcuts.updateAppShortcutParameters()
+        MorningRefresh.schedule()
     }
 
     var body: some Scene {
@@ -12,5 +13,8 @@ struct LooprApp: App {
             RootView()
         }
         .modelContainer(RouteStore.container)
+        .backgroundTask(.appRefresh(MorningRefresh.identifier)) {
+            await MorningRefresh.perform()
+        }
     }
 }

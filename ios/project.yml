@@ -27,6 +27,9 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSLocationWhenInUseUsageDescription: Loopr starts each route from where you are.
+        NSCalendarsFullAccessUsageDescription: Loopr reads your Runna calendar to find your upcoming runs and their workouts.
+        BGTaskSchedulerPermittedIdentifiers: [dev.willsawyerrrr.Loopr.refresh]
+        UIBackgroundModes: [fetch]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.willsawyerrrr.Loopr

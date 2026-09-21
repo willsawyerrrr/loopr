@@ -21,13 +21,15 @@ draw it without parsing the GPX. The response also carries a `previewUrl` — a 
 that exact route on OpenStreetMap. `?format=gpx` returns the file directly;
 `?format=html` returns the same map page rendered from a fresh route.
 
-An iOS 26 Shortcut reads the workout from the subscribed Runna calendar, calls
-this function, and saves the GPX to iCloud Drive; you import it in the Runna app
-(planned workout → Add Route → file picker). See
-`docs/feat/route-pipeline/shortcut-spec.md`.
+A native iOS app in `ios/` reads the subscribed Runna calendar, lists your
+upcoming runs, and generates, views, saves and exports a route for each from
+this endpoint. It can also prepare the next route each morning and notify you.
+You import the GPX in the Runna app (planned workout → Add Route → file
+picker). See `docs/feat/ios-app/overview.md`.
 
-A native iOS app in `ios/` generates, views, saves and exports routes from the
-same endpoint. See `docs/feat/ios-app/overview.md`.
+An iOS 26 Shortcut is an alternative client: it reads the same calendar, calls
+this function, and saves the GPX to iCloud Drive. See
+`docs/feat/route-pipeline/shortcut-spec.md`.
 
 ## Development
 

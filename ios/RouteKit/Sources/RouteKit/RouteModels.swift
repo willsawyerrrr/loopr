@@ -1,13 +1,19 @@
 import Foundation
 
-/// Body of `POST /api/route` for a manual target distance.
+/// Body of `POST /api/route`: either a manual target distance or a Runna workout description.
 public struct RouteRequest: Encodable, Sendable {
-    public var targetDistanceKm: Double
+    public var targetDistanceKm: Double?
+    /// The raw Runna workout text; the server works out the distance from it.
+    public var workout: String?
     /// `[lon, lat]`.
     public var start: [Double]
     public var hillsPreference: Double
     public var greenPreference: Double
     public var title: String?
+    /// The run's date as `yyyy-MM-dd`.
+    public var date: String?
+    /// Pace phrase (lowercased) to minutes per km.
+    public var paces: [String: Double]?
 
     public init(
         targetDistanceKm: Double,
@@ -22,6 +28,24 @@ public struct RouteRequest: Encodable, Sendable {
         self.hillsPreference = hillsPreference
         self.greenPreference = greenPreference
         self.title = title
+    }
+
+    public init(
+        workout: String,
+        title: String,
+        date: String,
+        start: RoutePoint,
+        hillsPreference: Double = 0,
+        greenPreference: Double = 0,
+        paces: [String: Double]
+    ) {
+        self.workout = workout
+        self.title = title
+        self.date = date
+        self.start = [start.longitude, start.latitude]
+        self.hillsPreference = hillsPreference
+        self.greenPreference = greenPreference
+        self.paces = paces
     }
 }
 
