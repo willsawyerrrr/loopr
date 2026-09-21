@@ -3,7 +3,6 @@ import SwiftData
 import SwiftUI
 
 struct GenerateView: View {
-    @Environment(\.modelContext) private var modelContext
     @AppStorage("distanceKm") private var distanceKm = 5.0
     @AppStorage("hillsPreference") private var hills = 0.0
     @AppStorage("greenPreference") private var green = 0.0
@@ -120,7 +119,7 @@ struct GenerateView: View {
     }
 
     private func name(for response: RouteResponse) -> String {
-        "\(response.route.distanceKm.formatted(.number.precision(.fractionLength(0...1)))) km route"
+        RouteFormat.name(distanceKm: response.route.distanceKm)
     }
 
     private func generate() {
@@ -129,6 +128,7 @@ struct GenerateView: View {
         Task {
             do {
                 let coordinate = try await location.currentCoordinate()
+                LastStartStore().save(RoutePoint(longitude: coordinate.longitude, latitude: coordinate.latitude))
                 let response = try await service.generate(
                     RouteRequest(
                         targetDistanceKm: distanceKm,
@@ -146,15 +146,6 @@ struct GenerateView: View {
     }
 
     private func save(_ response: RouteResponse, _ points: [RoutePoint]) {
-        let route = SavedRoute(
-            name: name(for: response),
-            targetDistanceKm: response.targetDistanceKm,
-            summary: response.route,
-            previewUrl: response.previewUrl,
-            points: points
-        )
-        modelContext.insert(route)
-        try? modelContext.save()
-        savedID = route.id
+        savedID = RouteStore.save(response: response, points: points).id
     }
 }

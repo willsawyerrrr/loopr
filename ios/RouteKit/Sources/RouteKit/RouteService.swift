@@ -21,20 +21,23 @@ public struct RouteService: Sendable {
     public typealias Transport = @Sendable (URLRequest) async throws -> (Data, URLResponse)
 
     private let baseURL: URL
+    private let timeout: TimeInterval
     private let transport: Transport
 
     public init(
         baseURL: URL = RouteService.defaultBaseURL,
+        timeout: TimeInterval = 60,
         transport: @escaping Transport = { try await URLSession.shared.data(for: $0) }
     ) {
         self.baseURL = baseURL
+        self.timeout = timeout
         self.transport = transport
     }
 
     public func generate(_ request: RouteRequest) async throws -> RouteResponse {
         var urlRequest = URLRequest(url: baseURL.appending(path: "api/route"))
         urlRequest.httpMethod = "POST"
-        urlRequest.timeoutInterval = 60
+        urlRequest.timeoutInterval = timeout
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
         urlRequest.httpBody = try JSONEncoder().encode(request)
 

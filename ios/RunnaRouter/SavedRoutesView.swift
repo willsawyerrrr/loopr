@@ -3,11 +3,11 @@ import SwiftData
 import SwiftUI
 
 struct SavedRoutesView: View {
-    @Environment(\.modelContext) private var modelContext
+    @Bindable private var navigator = AppNavigator.shared
     @Query(sort: \SavedRoute.createdAt, order: .reverse) private var routes: [SavedRoute]
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigator.savedPath) {
             Group {
                 if routes.isEmpty {
                     ContentUnavailableView(
@@ -19,7 +19,7 @@ struct SavedRoutesView: View {
                                 VStack(alignment: .leading) {
                                     Text(route.name).font(.headline)
                                     Text(
-                                        "\(route.distanceKm.formatted(.number.precision(.fractionLength(0...2)))) km · \(Int(route.ascentM.rounded())) m climb · \(route.createdAt.formatted(date: .abbreviated, time: .omitted))"
+                                        "\(RouteFormat.subtitle(distanceKm: route.distanceKm, ascentM: route.ascentM)) · \(route.createdAt.formatted(date: .abbreviated, time: .omitted))"
                                     )
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -27,8 +27,7 @@ struct SavedRoutesView: View {
                             }
                         }
                         .onDelete { offsets in
-                            offsets.map { routes[$0] }.forEach(modelContext.delete)
-                            try? modelContext.save()
+                            offsets.map { routes[$0] }.forEach(RouteStore.delete)
                         }
                     }
                 }
