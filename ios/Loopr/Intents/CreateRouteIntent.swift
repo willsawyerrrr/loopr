@@ -72,7 +72,7 @@ struct CreateRouteOfDistanceIntent: AppIntent {
 
 enum RouteCreation {
     @MainActor
-    private static func currentPoint() async throws -> RoutePoint {
+    static func currentPoint() async throws -> RoutePoint {
         let coordinate = try await LocationProvider().currentCoordinate()
         return RoutePoint(longitude: coordinate.longitude, latitude: coordinate.latitude)
     }
@@ -80,12 +80,19 @@ enum RouteCreation {
     static func create(km: Double) async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog & ShowsSnippetIntent {
         let start = try await StartResolver().resolve { try await currentPoint() }
         let draft = try await RouteGenerator.makeDraft(targetKm: km, start: start.point)
+        return present(draft, start: start.source)
+    }
 
+    /// The map snippet result for `draft`; `detail` follows "route" in the spoken line and `notes` end it.
+    static func present(
+        _ draft: RouteDraft, start source: ResolvedStart.Source, detail: String = "", notes: [String] = []
+    ) -> some IntentResult & ReturnsValue<String> & ProvidesDialog & ShowsSnippetIntent {
         let summary = RouteFormat.subtitle(distanceKm: draft.response.route.distanceKm, ascentM: draft.response.route.ascentM)
-        let origin = start.source == .lastUsed ? " from your last start point" : ""
+        let origin = source == .lastUsed ? " from your last start point" : ""
+        let spoken = "Here's a \(summary) route\(detail)\(origin)." + notes.map { " \($0)" }.joined()
         return .result(
             value: summary,
-            dialog: "Here's a \(summary) route\(origin).",
+            dialog: "\(spoken)",
             snippetIntent: RoutePreviewSnippetIntent(draftID: draft.id)
         )
     }

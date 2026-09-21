@@ -364,6 +364,14 @@ private let start = RoutePoint(longitude: 151.2, latitude: -33.8)
         }
     }
 
+    @Test func explainsHowTheDistanceWasReached() throws {
+        let response = try JSONDecoder().decode(RouteResponse.self, from: responseBody(runKm: 2.5))
+        let plain = ScreenshotRoute(response: response, text: "", rewritten: false, crossChecked: true)
+        #expect(plain.notes.isEmpty)
+        let unchecked = ScreenshotRoute(response: response, text: "", rewritten: true, crossChecked: false)
+        #expect(unchecked.notes.count == 2)
+    }
+
     @Test func decodesSegmentsAndRunKm() throws {
         let response = try JSONDecoder().decode(RouteResponse.self, from: responseBody(runKm: 2.5, walkKm: 1))
         #expect(response.runKm == 2.5)

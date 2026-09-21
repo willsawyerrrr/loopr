@@ -9,6 +9,12 @@ public struct RecognisedWorkout: Hashable, Sendable {
     /// The running distance in that line. The app counts only the running, not the walking between,
     /// so it can't be checked by the server, which compares it with the whole workout.
     public var statedRunKm: Double?
+
+    public init(text: String, title: String?, statedRunKm: Double?) {
+        self.text = text
+        self.title = title
+        self.statedRunKm = statedRunKm
+    }
 }
 
 public enum WorkoutText {

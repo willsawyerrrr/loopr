@@ -51,7 +51,8 @@ struct GenerateView: View {
                     case .failed(let message):
                         Section { Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
                     case .done(let response, let points):
-                        result(response, points)
+                        RouteResultSections(
+                            response: response, points: points, pins: usedShape.pins, shape: usedShape, savedID: $savedID)
                     }
                 }
                 .onChange(of: resultID) {
@@ -70,42 +71,6 @@ struct GenerateView: View {
 
     private var isLoading: Bool {
         if case .loading = phase { true } else { false }
-    }
-
-    @ViewBuilder
-    private func result(_ response: RouteResponse, _ points: [RoutePoint]) -> some View {
-        Section {
-            RouteMapView(points: points, pins: usedShape.pins, interactive: false)
-                .frame(height: 300)
-                .listRowInsets(EdgeInsets())
-                .id("result")
-            RouteStatsView(
-                distanceKm: response.route.distanceKm,
-                ascentM: response.route.ascentM,
-                descentM: response.route.descentM,
-                hilliness: response.route.hilliness,
-                elevationGainPerKm: response.route.elevationGainPerKm
-            )
-            ForEach(response.warnings, id: \.self) { warning in
-                Label(warning, systemImage: "exclamationmark.circle").font(.footnote)
-            }
-        }
-        Section {
-            Button(savedID == nil ? "Save route" : "Saved", systemImage: savedID == nil ? "bookmark" : "bookmark.fill") {
-                save(response, points)
-            }
-            .disabled(savedID != nil)
-            ShareLink(
-                item: GPXFile(name: name(for: response), gpx: GPXWriter.gpx(points: points, name: name(for: response))),
-                preview: SharePreview(name(for: response))
-            ) {
-                Label("Share GPX", systemImage: "square.and.arrow.up")
-            }
-        }
-    }
-
-    private func name(for response: RouteResponse) -> String {
-        RouteFormat.name(distanceKm: response.route.distanceKm)
     }
 
     private func generate() {
@@ -133,9 +98,5 @@ struct GenerateView: View {
                 phase = .failed(error.localizedDescription)
             }
         }
-    }
-
-    private func save(_ response: RouteResponse, _ points: [RoutePoint]) {
-        savedID = RouteStore.save(response: response, points: points, shape: usedShape).id
     }
 }

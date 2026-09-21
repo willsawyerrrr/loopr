@@ -9,6 +9,23 @@ public struct ScreenshotRoute: Sendable {
     public var rewritten: Bool
     /// Whether the total was checked against a figure on the screen.
     public var crossChecked: Bool
+
+    public init(response: RouteResponse, text: String, rewritten: Bool, crossChecked: Bool) {
+        self.response = response
+        self.text = text
+        self.rewritten = rewritten
+        self.crossChecked = crossChecked
+    }
+
+    /// What the user should know about how the distance was arrived at.
+    public var notes: [String] {
+        var notes: [String] = []
+        if rewritten { notes.append("The on-device model rewrote the recognised text to fix a mismatch.") }
+        if !crossChecked {
+            notes.append("The screenshot has no total to check this against; the distance comes from the steps at your paces.")
+        }
+        return notes
+    }
 }
 
 /// The workout couldn't be turned into a trustworthy distance.
@@ -19,6 +36,12 @@ public struct ManualDistanceRequest: Sendable {
     public var problems: [String]
     /// A distance to prefill, when one is known.
     public var suggestedKm: Double?
+
+    public init(text: String, problems: [String], suggestedKm: Double?) {
+        self.text = text
+        self.problems = problems
+        self.suggestedKm = suggestedKm
+    }
 }
 
 public enum ScreenshotRouteOutcome: Sendable {
