@@ -2,8 +2,19 @@ import MapKit
 import RouteKit
 import SwiftUI
 
+/// Where a route starts and finishes; distinct from the numbered pins.
+struct StartMarker: View {
+    var body: some View {
+        Image(systemName: "figure.run.circle.fill")
+            .font(.title)
+            .foregroundStyle(.white, .green)
+    }
+}
+
 struct RouteMapView: View {
     let points: [RoutePoint]
+    /// The chosen start to mark; the route's first point when `nil`.
+    var start: RoutePoint?
     /// Shaping pins to number on the route.
     var pins: [RoutePoint] = []
     var interactive = true
@@ -13,12 +24,8 @@ struct RouteMapView: View {
         Map(initialPosition: .rect(Self.rect(for: coordinates)), interactionModes: interactive ? .all : []) {
             MapPolyline(coordinates: coordinates)
                 .stroke(.blue, lineWidth: 5)
-            if let first = coordinates.first {
-                Annotation("Start", coordinate: first) {
-                    Image(systemName: "figure.run.circle.fill")
-                        .font(.title)
-                        .foregroundStyle(.white, .green)
-                }
+            if let marked = start?.coordinate ?? coordinates.first {
+                Annotation("Start", coordinate: marked) { StartMarker() }
             }
             ForEach(Array(pins.enumerated()), id: \.offset) { index, pin in
                 Annotation("", coordinate: pin.coordinate) { PinMarker(number: index + 1) }

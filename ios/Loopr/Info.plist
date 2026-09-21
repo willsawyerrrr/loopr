@@ -27,7 +27,7 @@
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Loopr reads your Runna calendar to find your upcoming runs and their workouts.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Loopr starts each route from where you are.</string>
+	<string>Loopr can start a route from where you are.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

@@ -7,8 +7,10 @@ struct RouteResultSections: View {
     let points: [RoutePoint]
     /// Shaping pins to number on the map.
     var pins: [RoutePoint] = []
-    /// Saved with the route.
+    /// Saved with the route; its start, if any, is marked on the map.
     var shape: RouteShape?
+    /// Where the route started from, e.g. `Current location`.
+    var startLabel: String?
     /// Names the saved route and the shared file; defaults to the distance.
     var name: String?
     @Binding var savedID: UUID?
@@ -17,7 +19,7 @@ struct RouteResultSections: View {
 
     var body: some View {
         Section {
-            RouteMapView(points: points, pins: pins, interactive: false)
+            RouteMapView(points: points, start: shape?.start, pins: pins, interactive: false)
                 .frame(height: 300)
                 .listRowInsets(EdgeInsets())
                 .id("result")
@@ -28,13 +30,14 @@ struct RouteResultSections: View {
                 hilliness: response.route.hilliness,
                 elevationGainPerKm: response.route.elevationGainPerKm
             )
+            if let startLabel { StartedFromLabel(label: startLabel) }
             ForEach(response.warnings, id: \.self) { warning in
                 Label(warning, systemImage: "exclamationmark.circle").font(.footnote)
             }
         }
         Section {
             Button(savedID == nil ? "Save route" : "Saved", systemImage: savedID == nil ? "bookmark" : "bookmark.fill") {
-                savedID = RouteStore.save(response: response, points: points, name: name, shape: shape).id
+                savedID = RouteStore.save(response: response, points: points, name: name, shape: shape, startLabel: startLabel).id
             }
             .disabled(savedID != nil)
             ShareLink(
@@ -44,5 +47,14 @@ struct RouteResultSections: View {
                 Label("Share GPX", systemImage: "square.and.arrow.up")
             }
         }
+    }
+}
+
+/// `Started from <label>`.
+struct StartedFromLabel: View {
+    let label: String
+
+    var body: some View {
+        Label("Started from \(label)", systemImage: "location").font(.footnote).foregroundStyle(.secondary)
     }
 }

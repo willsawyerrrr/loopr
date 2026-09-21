@@ -19,7 +19,8 @@ public enum CompassPoint: Int, CaseIterable, Codable, Sendable {
     }
 }
 
-/// How the user wants a loop steered: up to `maxPins` points to pass through and a rough heading.
+/// How the user wants a loop steered: a start and finish other than the device location, up to `maxPins`
+/// points to pass through and a rough heading.
 public struct RouteShape: Codable, Equatable, Sendable {
     public static let maxPins = 3
     /// The furthest a pin may sit from the start, as a fraction of the target distance (the server rejects pins beyond it).
@@ -31,19 +32,39 @@ public struct RouteShape: Codable, Equatable, Sendable {
         didSet { heading = heading.flatMap(Self.normalisedHeading) }
     }
 
-    public init(pins: [RoutePoint] = [], heading: Double? = nil) {
+    /// Where the loop starts and finishes, or `nil` to use the default start or the device location.
+    public private(set) var start: RoutePoint?
+    /// What to call `start`; `nil` for a dropped point.
+    public private(set) var startName: String?
+
+    public init(pins: [RoutePoint] = [], heading: Double? = nil, start: StartPlace? = nil) {
         self.pins = Array(pins.prefix(Self.maxPins))
         self.heading = heading.flatMap(Self.normalisedHeading)
+        self.start = start?.point
+        self.startName = start?.name
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let start = try container.decodeIfPresent(RoutePoint.self, forKey: .start)
         self.init(
             pins: try container.decodeIfPresent([RoutePoint].self, forKey: .pins) ?? [],
-            heading: try container.decodeIfPresent(Double.self, forKey: .heading))
+            heading: try container.decodeIfPresent(Double.self, forKey: .heading),
+            start: start.map {
+                StartPlace(point: $0, name: try? container.decodeIfPresent(String.self, forKey: .startName))
+            })
     }
 
-    public var isEmpty: Bool { pins.isEmpty && heading == nil }
+    public var isEmpty: Bool { pins.isEmpty && heading == nil && start == nil }
+
+    /// The chosen start with its name.
+    public var startPlace: StartPlace? {
+        get { start.map { StartPlace(point: $0, name: startName) } }
+        set {
+            start = newValue?.point
+            startName = newValue?.name
+        }
+    }
 
     public var canAddPin: Bool { pins.count < Self.maxPins }
 
@@ -77,9 +98,10 @@ public struct RouteShape: Codable, Equatable, Sendable {
         return Set(pins.indices.filter { start.distanceMeters(to: pins[$0]) > limit })
     }
 
-    /// e.g. `2 pins · NE`; `Off` when empty.
+    /// e.g. `Custom start · 2 pins · NE`; `Off` when empty.
     public var summary: String {
         var parts: [String] = []
+        if start != nil { parts.append("Custom start") }
         if !pins.isEmpty { parts.append(pins.count == 1 ? "1 pin" : "\(pins.count) pins") }
         if let compass { parts.append(compass.label) }
         return parts.isEmpty ? "Off" : parts.joined(separator: " · ")

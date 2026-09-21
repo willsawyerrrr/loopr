@@ -108,7 +108,8 @@ struct ScreenshotRouteView: View {
                 Text("Correct the text above, or set the distance yourself.")
             }
         case .route(let response, let points, let notes):
-            RouteResultSections(response: response, points: points, name: model.saveName, savedID: $model.savedID)
+            RouteResultSections(
+                response: response, points: points, startLabel: model.startLabel, name: model.saveName, savedID: $model.savedID)
             if !notes.isEmpty || response.warnings.contains(where: RunPlan.isPaceWarning) {
                 Section {
                     ForEach(notes, id: \.self) { Label($0, systemImage: "info.circle").font(.footnote) }

@@ -7,7 +7,7 @@ enum LocationError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .denied: "Location access is off. Enable it in Settings to start routes from where you are."
+        case .denied: "Location access is off. Enable it in Settings to start routes from where you are, or choose a start instead."
         case .unavailable: "Couldn't get your location. Try again."
         }
     }

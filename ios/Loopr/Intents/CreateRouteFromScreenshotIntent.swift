@@ -36,8 +36,8 @@ struct CreateRouteFromScreenshotIntent: AppIntent {
         if let distance {
             let resolved = try await start
             let draft = try await RouteGenerator.makeDraft(
-                targetKm: RouteDistance.kilometres(from: distance), start: resolved.point)
-            return RouteCreation.present(draft, start: resolved.source)
+                targetKm: RouteDistance.kilometres(from: distance), start: resolved)
+            return RouteCreation.present(draft)
         }
 
         let recognised = try await ScreenshotOCR.recognise(screenshot.data)
@@ -49,9 +49,9 @@ struct CreateRouteFromScreenshotIntent: AppIntent {
             throw $distance.needsValueError("\(problems) How far should the route be?")
         case .route(let route):
             let draft = try await RouteGenerator.draft(
-                from: route.response, targetKm: route.response.targetDistanceKm, start: resolved.point)
+                from: route.response, targetKm: route.response.targetDistanceKm, start: resolved)
             return RouteCreation.present(
-                draft, start: resolved.source, detail: " from your workout", notes: route.notes + route.response.warnings)
+                draft, detail: " from your workout", notes: route.notes + route.response.warnings)
         }
     }
 }

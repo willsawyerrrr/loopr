@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var calendars: [CalendarSummary] = []
     @State private var rows = PaceStore().paces.sorted { $0.key < $1.key }.map { PaceRow(phrase: $0.key, pace: $0.value) }
     @State private var notificationsDenied = false
+    @State private var defaultStart = DefaultStartStore().value
+    @State private var showDefaultStart = false
 
     var body: some View {
         NavigationStack {
@@ -34,6 +36,20 @@ struct SettingsView: View {
                     Text("Calendar")
                 } footer: {
                     Text("Automatic uses the calendar whose name contains “\(RunPlan.calendarName)”.")
+                }
+
+                Section {
+                    Button { showDefaultStart = true } label: {
+                        LabeledContent("Start", value: defaultStart?.displayName ?? "Current location")
+                    }
+                    .foregroundStyle(.primary)
+                    if defaultStart != nil {
+                        Button("Clear", role: .destructive) { defaultStart = nil }
+                    }
+                } header: {
+                    Text("Default start")
+                } footer: {
+                    Text("Where routes start and finish unless a route has its own start. Morning refresh, Siri and Shortcuts use it too. Without one, routes start from where you are.")
                 }
 
                 Section("Route preferences") { PreferenceSliders() }
@@ -78,6 +94,8 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Done") { dismiss() } }
             .onAppear { calendars = RunCalendar.access == .granted ? RunCalendar.calendars().sorted { $0.title < $1.title } : [] }
+            .sheet(isPresented: $showDefaultStart) { DefaultStartPicker(place: $defaultStart) }
+            .onChange(of: defaultStart) { DefaultStartStore().save(defaultStart) }
             .onChange(of: rows) {
                 PaceStore().save(
                     Dictionary(

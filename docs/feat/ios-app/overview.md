@@ -20,11 +20,15 @@ ios/
     `[lon, lat]` and the hills/green preferences. `RouteRequest.regenerated()`
     adds a random `variant` (1–1,000,000) so the server returns a different loop
     than the last one; first generations send none.
-  - `RouteShape` — the pins (at most 3) and rough heading (degrees clockwise
-    from north, normalised to `[0, 360)`; `CompassPoint` maps `N`…`NW` to and
-    from degrees) that steer a loop. `applied(to:)` sets the request's `waypoints`
-    and `heading`, both omitted when empty; `unreachablePins(from:targetKm:)`
-    flags pins beyond the distance the server accepts.
+  - `RouteShape` — the start (with an optional name), the pins (at most 3) and
+    rough heading (degrees clockwise from north, normalised to `[0, 360)`;
+    `CompassPoint` maps `N`…`NW` to and from degrees) that steer a loop. Shapes
+    saved without a start decode without one. `applied(to:)` sets the
+    request's `waypoints` and `heading`, both omitted when empty;
+    `unreachablePins(from:targetKm:)` flags pins beyond the distance the server
+    accepts.
+  - `StartPlace` / `DefaultStartStore` — a chosen start (point and optional
+    name) and the *Default start* from Settings, kept in `UserDefaults`.
   - `RunPlan` / `CalendarEvent` / `PlannedRun` — the pure calendar logic, with no
     EventKit import: picks all-day events in `[start of today, +8 days)`
     earliest first, builds the workout request from an event, chooses the
@@ -39,18 +43,22 @@ ios/
   - `OCRLayout` / `WorkoutText` / `WorkoutOutline` / `ScreenshotRoutePipeline` —
     the screenshot logic (see below), pure and free of Vision.
   - `SavedRoute` — the SwiftData model (metadata, coordinates, server warnings,
-    the shape used and, for calendar runs, the event key); `SavedRoute.makeContainer()` opens
+    the shape used, where it started from and, for calendar runs, the event key); `SavedRoute.makeContainer()` opens
     the on-device store.
   - `GPXWriter` / `GPXParser` / `GPXFile` — GPX 1.1 output matching the server
     and a `Transferable` that shares a `.gpx` file.
   - `RouteDistance` — converts a `Measurement<UnitLength>` to km and enforces
     the 1–50 km range.
-  - `StartResolver` / `LastStartStore` — a fresh location fix if one arrives
-    within 8 s, otherwise the last start point used, otherwise a clear error.
+  - `StartResolver` / `LastStartStore` — picks the start for a request: the
+    route's own chosen start, else the default start, else a fresh location fix
+    if one arrives within 8 s, else the last device location, else a clear
+    error. A chosen or default start never asks for the location.
+    `LastStartStore` holds the last device location only: a chosen or default
+    start never overwrites it, a real fix always does.
   - `RouteFormat` — the shared distance / name / subtitle strings.
 - **`Loopr`** is the UI: a *Runs* tab (upcoming Runna runs, and a *From
   screenshot* button), a *Generate* tab
-  (distance, hills, green, current location as start, map, save, share GPX) and
+  (distance, hills, green, shape, map, save, share GPX; the route starts at the chosen or default start, else the current location) and
   a *Saved* tab (list, detail map, swipe to delete, share GPX). The *Shape route*
   sheet (`ShapeSheet`) is shared by the *Generate* tab and the run detail. The EventKit
   adapter (`RunCalendar`), route generation for a run (`RunPreparation`) and the
@@ -76,9 +84,10 @@ once a route exists it also shows the distance and a checkmark.
   button; nothing is generated until the button is tapped. Generating sends the
   workout text (the event's Notes) with the title, the date (`yyyy-MM-dd`), the
   start point, the shape, the hills/green preferences and the pace table. The
-  start is the current location, or the last start point used. Once a route
-  exists the map, stats, warnings (verbatim), *Share GPX* and *Regenerate* are
-  shown. A run with no Notes reports that it has no workout.
+  start is the shape's chosen start, else the default start, else the current
+  location, else the last start point used. Once a route
+  exists the map, where it started from, stats, warnings (verbatim), *Share GPX*
+  and *Regenerate* are shown. A run with no Notes reports that it has no workout.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
   event identifier plus date), and appears in *Saved* too. *Regenerate* sends a
   fresh `variant` and updates that same saved route with a different loop.
@@ -86,9 +95,18 @@ once a route exists it also shows the distance and a checkmark.
 ## Shape sheet
 
 A **Shape route** row on the *Generate* tab and on a run's detail opens a sheet
-with a map centred on the start (the current location, or the last start point
-used; with neither the sheet says so). The row shows the current shape (`2 pins ·
-NE`, or `Off`).
+with a map centred on the start. The row shows the current shape (`Custom start ·
+2 pins · NE`, or `Off`).
+
+- **Start:** a *Start and finish* row above the pins shows where the loop starts
+  and ends: *Current location* unless a start is chosen or a default start is
+  set. Search for a place or address in the sheet's search field (suggestions
+  come from `MKLocalSearchCompleter`) and pick one, or tap *Set start* and tap
+  the map. The start marker (the runner) is draggable once chosen, and a dropped
+  start is named after what is there when that can be looked up. *Reset* returns
+  to the default start, or the current location. The map recentres on the start.
+  Choosing a start needs no location access; the device location is only asked
+  for while no start is chosen and there is no default start.
 
 - **Pins:** tap the map to drop up to 3 numbered pins, drag one to move it, and
   remove it from its context menu or the minus button beneath the map. The loop
@@ -98,18 +116,21 @@ NE`, or `Off`).
   and the visiting order.
 - **Clear** removes the pins and the heading; **Done** keeps them.
 - The shape is sent as `waypoints` and `heading` with every request from that
-  screen, including regenerations. The result map numbers the pins.
+  screen, including regenerations; its start is sent as the request's `start`.
+  The result map numbers the pins and marks the start.
 - On a run, the shape defaults to the one the saved route was generated with and
   is saved with the route, so *Regenerate* keeps it. A run with no route
   can be shaped before it is first generated. Morning refresh reuses the saved
   shape, or none.
-- Siri and Shortcuts requests are not shaped.
+- Siri and Shortcuts requests are not shaped and use the default start, if any.
+- The *From screenshot* screen has no shape either: it uses the default start.
 
 Limits:
 
 - A pin further from the start than 0.75 × the target distance can't be part of a
-  loop of that length. The pin turns orange and the server rejects the request;
-  move it closer or raise the distance.
+  loop of that length. The distance is measured from the chosen start (else the
+  default start, else the device location). The pin turns orange and the server
+  rejects the request; move it closer or raise the distance.
 - When the pins force a length well off the target, the route is still returned
   and the server adds a warning giving its real length.
 - Trail Router isn't guaranteed to follow pins exactly: a route passes near each
@@ -120,6 +141,12 @@ Limits:
 A gear on the *Runs* tab opens:
 
 - **Calendar** — pick which calendar holds the runs (default: automatic).
+- **Default start** — an optional place (search, or tap the map) that routes
+  start and finish at when they have no start of their own; *Clear* removes it.
+  It is stored as a name and coordinate. When set it is the start for the
+  morning refresh, Siri and Shortcuts, the screenshot flow and any generation
+  without a per-route start; a shape's own start overrides it. When unset,
+  routes start from the current location as usual.
 - **Route preferences** — the hills and green sliders, the same values the
   *Generate* tab and Siri use.
 - **Paces** — an editable table of Runna pace phrase to min/km, seeded with the
@@ -139,9 +166,9 @@ permission. The request is submitted each time the app moves to the background
 launching), and each run reschedules the next.
 
 iOS decides when background refreshes happen and may run them late or not at
-all, notably if the app is rarely opened or Low Power Mode is on. Without a
-location fix in the background it uses the last start point, so open the app
-where you run from. A run's *Generate route* button always generates a missing route.
+all, notably if the app is rarely opened or Low Power Mode is on. It starts at
+the default start when one is set. Otherwise, without a location fix in the
+background it uses the last device location, so open the app where you run from. A run's *Generate route* button always generates a missing route.
 
 ## Siri and Shortcuts
 
@@ -152,7 +179,7 @@ beyond the location usage string are needed.
 | Intent | What it does |
 |---|---|
 | `CreateRouteOfDistanceIntent` | Backs the phrases that say the distance aloud. Takes a whole-kilometre `DistanceEntity` (1–50 km) and otherwise behaves like `CreateRouteIntent`. |
-| `CreateRouteIntent` | Takes a distance, generates a loop from the current location (or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
+| `CreateRouteIntent` | Takes a distance, generates a loop from the default start (or the current location, or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
 | `CreateRouteFromScreenshotIntent` | Takes a screenshot of a Runna workout, reads its distance and returns the same map snippet. Not a Siri phrase; see *Route from a screenshot*. |
 | `OpenRouteIntent` | Opens a saved route in the app. |
 
@@ -172,10 +199,13 @@ Shortcut). *"Open `<route>` in Loopr"* opens a saved route.
   opening the app; **Regenerate** produces a different loop for the same distance (a fresh `variant` each tap).
   Generated routes are held in memory until saved, so a route that has sat
   unsaved after the app process exits must be re-requested.
-- **Start point:** the current location when a fix arrives in time, otherwise
-  the last start point used (recorded whenever the app or an intent gets a
-  fix). With neither, the intent asks you to open the app once and allow
-  location.
+- **Start point:** the default start from *Settings* when set, otherwise the
+  current location when a fix arrives in time, otherwise the last device
+  location (recorded whenever the app or an intent gets a fix). With none of
+  these, the intent asks you to open the app once and allow location, or set a
+  default start. The spoken line names the start ("… route from Home.") unless
+  it was the current location, and the snippet does the same; **Regenerate**
+  keeps the start.
 - **Preferences:** hills and green use the values set on the *Generate* tab
   (or in *Settings*).
 - **Time budget:** the API call times out after 25 s to stay inside the
@@ -297,9 +327,11 @@ swift test
 
 Covers response decoding (with and without `coordinates`), GPX writing and
 parsing, request encoding (manual and workout), route shapes (pin cap, heading
-normalisation, compass points, request fields, reach check, persistence on saved
-routes), server error handling, the
-SwiftData store, distance conversion, start-point resolution, the display
+normalisation, compass points, request fields, reach check, the start and
+decoding shapes saved without one, persistence on saved routes), server error
+handling, the SwiftData store, distance conversion, start-point resolution
+(chosen, default and device starts and the last-used store), the default start
+store, the display
 strings, run selection and request building from calendar events, calendar
 choice, the morning schedule time and the pace table.
 

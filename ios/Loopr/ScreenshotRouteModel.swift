@@ -24,6 +24,8 @@ final class ScreenshotRouteModel {
     var manualKm = 5.0
     var savedID: UUID?
     private(set) var title: String?
+    /// Where the current route started from.
+    private(set) var startLabel: String?
     private var statedRunKm: Double?
     private var lines: [String] = []
 
@@ -60,7 +62,7 @@ final class ScreenshotRouteModel {
         phase = .generating
         savedID = nil
         do {
-            let start = try await currentStart()
+            let start = try await currentStart().point
             let defaults = UserDefaults.standard
             let response = try await RouteService().generate(
                 RouteRequest(
@@ -82,7 +84,7 @@ final class ScreenshotRouteModel {
             let start = try await currentStart()
             let workout = RecognisedWorkout(text: text, title: title, statedRunKm: statedRunKm)
             let outcome = try await ScreenshotRouting.pipeline(rewriting: lines)
-                .route(for: workout, start: start, date: ScreenshotRouting.today)
+                .route(for: workout, start: start.point, date: ScreenshotRouting.today)
             switch outcome {
             case .route(let route):
                 if route.rewritten { text = route.text }
@@ -101,10 +103,10 @@ final class ScreenshotRouteModel {
         phase = points.isEmpty ? .failed("The route had no geometry.") : .route(response, points, notes: notes)
     }
 
-    private func currentStart() async throws -> RoutePoint {
-        let coordinate = try await LocationProvider().currentCoordinate()
-        let point = RoutePoint(longitude: coordinate.longitude, latitude: coordinate.latitude)
-        LastStartStore().save(point)
-        return point
+    /// The default start, else the current location or the last one used.
+    private func currentStart() async throws -> ResolvedStart {
+        let start = try await StartResolver().resolve { try await LocationProvider().currentPoint() }
+        startLabel = start.label
+        return start
     }
 }

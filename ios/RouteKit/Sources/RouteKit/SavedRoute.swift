@@ -21,6 +21,8 @@ public final class SavedRoute {
     private var pointsData: Data
     private var warningsData: Data?
     private var shapeData: Data?
+    /// Where the route started from, e.g. `Current location` or a chosen place's name.
+    public var startLabel: String?
 
     public init(
         name: String,
@@ -31,6 +33,7 @@ public final class SavedRoute {
         warnings: [String] = [],
         eventKey: String? = nil,
         shape: RouteShape? = nil,
+        startLabel: String? = nil,
         createdAt: Date = .now
     ) {
         self.id = UUID()
@@ -48,12 +51,13 @@ public final class SavedRoute {
         self.pointsData = (try? JSONEncoder().encode(points)) ?? Data()
         self.warningsData = try? JSONEncoder().encode(warnings)
         self.shapeData = Self.encode(shape)
+        self.startLabel = startLabel
     }
 
-    /// Replaces the route's geometry, metrics and shape, keeping its identity, name and event.
+    /// Replaces the route's geometry, metrics, shape and start, keeping its identity, name and event.
     public func update(
         targetDistanceKm: Double, summary: RouteSummary, previewUrl: String?, points: [RoutePoint], warnings: [String],
-        shape: RouteShape? = nil
+        shape: RouteShape? = nil, startLabel: String? = nil
     ) {
         self.targetDistanceKm = targetDistanceKm
         distanceKm = summary.distanceKm
@@ -66,6 +70,7 @@ public final class SavedRoute {
         pointsData = (try? JSONEncoder().encode(points)) ?? Data()
         warningsData = try? JSONEncoder().encode(warnings)
         shapeData = Self.encode(shape)
+        self.startLabel = startLabel
     }
 
     private static func encode(_ shape: RouteShape?) -> Data? {
@@ -73,7 +78,7 @@ public final class SavedRoute {
         return try? JSONEncoder().encode(shape)
     }
 
-    /// The pins and heading the route was generated with, if any.
+    /// The start, pins and heading the route was generated with, if any.
     public var shape: RouteShape? {
         shapeData.flatMap { try? JSONDecoder().decode(RouteShape.self, from: $0) }
     }

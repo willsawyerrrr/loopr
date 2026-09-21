@@ -5,7 +5,7 @@ import RouteKit
 struct RouteDraft: Sendable {
     let id: UUID
     var targetKm: Double
-    var start: RoutePoint
+    var start: ResolvedStart
     var response: RouteResponse
     var points: [RoutePoint]
     var snapshotPNG: Data?
@@ -42,12 +42,12 @@ actor DraftStore {
 
 enum RouteGenerator {
     /// Generates a loop with the app's hills/green preferences and stores it as a draft; `regenerate` asks for a different loop than a plain request returns. Must finish within the ~30 s intent budget.
-    static func makeDraft(targetKm: Double, start: RoutePoint, regenerate: Bool = false) async throws -> RouteDraft {
+    static func makeDraft(targetKm: Double, start: ResolvedStart, regenerate: Bool = false) async throws -> RouteDraft {
         let defaults = UserDefaults.standard
         var request = RouteRequest(
             targetDistanceKm: targetKm,
-            startLongitude: start.longitude,
-            startLatitude: start.latitude,
+            startLongitude: start.point.longitude,
+            startLatitude: start.point.latitude,
             hillsPreference: defaults.double(forKey: "hillsPreference"),
             greenPreference: defaults.double(forKey: "greenPreference")
         )
@@ -57,7 +57,7 @@ enum RouteGenerator {
     }
 
     /// Stores an already generated `response` as a draft, so Regenerate reuses `targetKm` and `start`.
-    static func draft(from response: RouteResponse, targetKm: Double, start: RoutePoint) async throws -> RouteDraft {
+    static func draft(from response: RouteResponse, targetKm: Double, start: ResolvedStart) async throws -> RouteDraft {
         let points = response.resolvedPoints()
         guard !points.isEmpty else { throw RouteDraftError.noGeometry }
         var draft = RouteDraft(

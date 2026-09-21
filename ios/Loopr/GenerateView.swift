@@ -11,10 +11,10 @@ struct GenerateView: View {
     @State private var savedID: UUID?
     @State private var shape = RouteShape()
     @State private var usedShape = RouteShape()
+    @State private var usedStart: ResolvedStart?
     @State private var showShape = false
 
     private let service = RouteService()
-    private let location = LocationProvider()
 
     private enum Phase {
         case idle
@@ -35,7 +35,7 @@ struct GenerateView: View {
                         ShapeRow(shape: shape) { showShape = true }
                         Button(action: generate) {
                             HStack {
-                                Text("Generate route from here")
+                                Text("Generate route")
                                 if case .loading = phase {
                                     Spacer()
                                     ProgressView()
@@ -52,7 +52,8 @@ struct GenerateView: View {
                         Section { Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
                     case .done(let response, let points):
                         RouteResultSections(
-                            response: response, points: points, pins: usedShape.pins, shape: usedShape, savedID: $savedID)
+                            response: response, points: points, pins: usedShape.pins, shape: usedShape,
+            startLabel: usedStart?.label, savedID: $savedID)
                     }
                 }
                 .onChange(of: resultID) {
@@ -80,12 +81,14 @@ struct GenerateView: View {
         usedShape = shape
         Task {
             do {
-                let coordinate = try await location.currentCoordinate()
-                LastStartStore().save(RoutePoint(longitude: coordinate.longitude, latitude: coordinate.latitude))
+                let start = try await StartResolver().resolve(chosen: usedShape.startPlace) {
+                    try await LocationProvider().currentPoint()
+                }
+                usedStart = start
                 var request = RouteRequest(
                     targetDistanceKm: distanceKm,
-                    startLongitude: coordinate.longitude,
-                    startLatitude: coordinate.latitude,
+                    startLongitude: start.point.longitude,
+                    startLatitude: start.point.latitude,
                     hillsPreference: hills,
                     greenPreference: green
                 )
