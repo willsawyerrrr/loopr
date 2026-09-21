@@ -35,6 +35,15 @@ function parseStart(value: unknown): [number, number] | null {
   return [lon, lat];
 }
 
+/** `undefined` when absent, `null` when not a non-negative integer. */
+function parseVariant(value: unknown): number | null | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const n = typeof value === "string" ? Number(value) : value;
+  return typeof n === "number" && Number.isSafeInteger(n) && n >= 0 ? n : null;
+}
+
+const INVALID_VARIANT = { error: "`variant` must be a non-negative integer" };
+
 function mergePaces(overrides: unknown): Record<string, number> {
   const merged: Record<string, number> = { ...DEFAULT_PACES };
   if (overrides && typeof overrides === "object") {
@@ -122,6 +131,9 @@ export async function POST(request: Request): Promise<Response> {
   const start = parseStart(body["start"]);
   if (!start) return json({ error: "`start` must be `[lon, lat]`" }, 400);
 
+  const variant = parseVariant(body["variant"]);
+  if (variant === null) return json(INVALID_VARIANT, 400);
+
   const hasWorkout = typeof body["workout"] === "string" && body["workout"].trim() !== "";
   const hasManual = typeof body["targetDistanceKm"] === "number";
   if (!hasWorkout && !hasManual) {
@@ -137,6 +149,7 @@ export async function POST(request: Request): Promise<Response> {
       ...(hasManual ? { targetDistanceKm: body["targetDistanceKm"] as number } : {}),
       ...(typeof body["title"] === "string" ? { title: body["title"] } : {}),
       ...(typeof body["date"] === "string" ? { date: body["date"] } : {}),
+      ...(variant !== undefined ? { variant } : {}),
       config: buildConfig(
         start,
         body["hillsPreference"],
@@ -162,11 +175,15 @@ export async function GET(request: Request): Promise<Response> {
     return json({ error: "`distanceKm` query param must be a positive number" }, 400);
   }
 
+  const variant = parseVariant(params.get("variant") ?? undefined);
+  if (variant === null) return json(INVALID_VARIANT, 400);
+
   return run(
     {
       targetDistanceKm: distanceKm,
       ...(params.get("title") ? { title: params.get("title")! } : {}),
       ...(params.get("date") ? { date: params.get("date")! } : {}),
+      ...(variant !== undefined ? { variant } : {}),
       config: buildConfig(
         start,
         params.has("hills") ? Number(params.get("hills")) : undefined,

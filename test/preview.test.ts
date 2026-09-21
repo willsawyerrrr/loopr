@@ -34,6 +34,7 @@ const RESULT: RouteResult = {
     ok: true,
   },
   warnings: ['Trail Router overrode parameters: {"avoidRepetition":false}'],
+  variant: 0,
 };
 
 const DATA: PreviewData = previewData(RESULT, "Walk Run");

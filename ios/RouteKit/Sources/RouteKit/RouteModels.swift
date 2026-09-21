@@ -14,6 +14,8 @@ public struct RouteRequest: Encodable, Sendable {
     public var date: String?
     /// Pace phrase (lowercased) to minutes per km.
     public var paces: [String: Double]?
+    /// Asks the server for a different loop than the one a request without it returns; omitted when `nil`.
+    public var variant: Int?
 
     public init(
         targetDistanceKm: Double,
@@ -46,6 +48,16 @@ public struct RouteRequest: Encodable, Sendable {
         self.hillsPreference = hillsPreference
         self.greenPreference = greenPreference
         self.paces = paces
+    }
+
+    /// The range `regenerated(variant:)` draws from by default.
+    public static let variantRange = 1...1_000_000
+
+    /// This request with a fresh `variant`, so the server returns a different loop than the last one.
+    public func regenerated(variant: () -> Int = { Int.random(in: RouteRequest.variantRange) }) -> RouteRequest {
+        var copy = self
+        copy.variant = variant()
+        return copy
     }
 }
 

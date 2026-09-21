@@ -104,6 +104,28 @@ private func responseJSON(coordinates: String?) -> Data {
         #expect(json["greenPreference"] as? Double == 0.25)
     }
 
+    @Test func omitsVariantUntilRegenerated() throws {
+        let request = RouteRequest(targetDistanceKm: 5, startLongitude: 0, startLatitude: 0)
+        func json(_ request: RouteRequest) throws -> [String: Any] {
+            try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(request)) as? [String: Any])
+        }
+        #expect(try json(request)["variant"] == nil)
+
+        var next = 0
+        let first = request.regenerated { next += 1; return next }
+        let second = request.regenerated { next += 1; return next }
+        #expect(try json(first)["variant"] as? Int == 1)
+        #expect(try json(second)["variant"] as? Int == 2)
+        #expect(request.variant == nil)
+    }
+
+    @Test func regeneratedVariantsStayInRange() throws {
+        let request = RouteRequest(targetDistanceKm: 5, startLongitude: 0, startLatitude: 0)
+        for _ in 0..<100 {
+            #expect(RouteRequest.variantRange.contains(try #require(request.regenerated().variant)))
+        }
+    }
+
     @Test func surfacesServerErrors() async {
         let body = Data(#"{"error":"Trail Router failed","detail":"timeout"}"#.utf8)
         let service = service(status: 502, body: body)

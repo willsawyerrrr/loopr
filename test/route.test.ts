@@ -317,3 +317,89 @@ describe("POST /api/route — output formats", () => {
     expect(res.headers.get("Content-Type")).toBe("application/json");
   });
 });
+
+describe("POST /api/route — variant", () => {
+  const candidate = (distance: number, lon: number) => ({
+    distance,
+    geometry: { coordinates: [[lon, 51.5], [lon + 0.01, 51.51], [lon, 51.5]] },
+    ascent: 10,
+    descent: 10,
+    weight: 1,
+    greenScore: 0.1,
+  });
+  const VARIANT_BODY = {
+    routes: [
+      candidate(3000, -0.1),
+      candidate(4850, -0.2),
+      candidate(5020, -0.3),
+      candidate(5200, -0.4),
+      candidate(7000, -0.5),
+    ],
+  };
+  const sentStart = (impl: ReturnType<typeof stubRouter>) =>
+    new URL(impl.mock.calls[0]![0]).searchParams.get("coordinates");
+
+  it("echoes variant 0 and leaves the start alone when absent", async () => {
+    const impl = stubRouter(VARIANT_BODY);
+    const json = await readJson(await POST(postRequest({ targetDistanceKm: 5, start: START })));
+    expect(json.variant).toBe(0);
+    expect(json.route.distanceKm).toBe(5.02);
+    expect(sentStart(impl)).toBe(`${START[0]},${START[1]}`);
+  });
+
+  it("variant 0 matches the absent behaviour", async () => {
+    stubRouter(VARIANT_BODY);
+    const json = await readJson(
+      await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 0 })),
+    );
+    expect(json.variant).toBe(0);
+    expect(json.route.distanceKm).toBe(5.02);
+  });
+
+  it("variant > 0 nudges the start, picks within tolerance and echoes the variant", async () => {
+    const seen = new Set<number>();
+    for (let variant = 1; variant <= 20; variant++) {
+      const impl = stubRouter(VARIANT_BODY);
+      const json = await readJson(
+        await POST(postRequest({ targetDistanceKm: 5, start: START, variant })),
+      );
+      expect(json.variant).toBe(variant);
+      expect(sentStart(impl)).not.toBe(`${START[0]},${START[1]}`);
+      expect(json.route.distanceKm).toBeGreaterThanOrEqual(4.75);
+      expect(json.route.distanceKm).toBeLessThanOrEqual(5.25);
+      seen.add(json.route.distanceKm);
+    }
+    expect(seen.size).toBeGreaterThan(1);
+  });
+
+  it("the same variant is repeatable", async () => {
+    stubRouter(VARIANT_BODY);
+    const a = await readJson(await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 4 })));
+    const b = await readJson(await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 4 })));
+    expect(a.route).toEqual(b.route);
+    expect(a.coordinates).toEqual(b.coordinates);
+  });
+
+  it("GET accepts variant", async () => {
+    stubRouter(VARIANT_BODY);
+    const res = await GET(
+      new Request("https://x/api/route?distanceKm=5&start=-0.1278,51.5074&variant=7"),
+    );
+    expect((await readJson(res)).variant).toBe(7);
+  });
+
+  it("400 on an invalid variant", async () => {
+    stubRouter(VARIANT_BODY);
+    for (const variant of [-1, 1.5, "abc", true, Number.MAX_VALUE]) {
+      const res = await POST(postRequest({ targetDistanceKm: 5, start: START, variant }));
+      expect(res.status).toBe(400);
+      expect((await readJson(res)).error).toMatch(/variant/);
+    }
+    for (const q of ["-1", "1.5", "abc"]) {
+      const res = await GET(
+        new Request(`https://x/api/route?distanceKm=5&start=-0.1278,51.5074&variant=${q}`),
+      );
+      expect(res.status).toBe(400);
+    }
+  });
+});
