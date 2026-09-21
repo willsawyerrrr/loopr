@@ -6,8 +6,11 @@ struct RunnaRouterShortcuts: AppShortcutsProvider {
             intent: CreateRouteOfDistanceIntent(),
             phrases: [
                 "Create a \(\.$distance) route in \(.applicationName)",
+                "Create an \(\.$distance) route in \(.applicationName)",
                 "Make me a \(\.$distance) route with \(.applicationName)",
+                "Make me an \(\.$distance) route with \(.applicationName)",
                 "Plan a \(\.$distance) run in \(.applicationName)",
+                "Plan an \(\.$distance) run in \(.applicationName)",
             ],
             shortTitle: "Create Route of Distance",
             systemImageName: "point.topleft.down.to.point.bottomright.curvepath"

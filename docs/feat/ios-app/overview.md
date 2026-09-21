@@ -46,7 +46,8 @@ beyond the location usage string are needed.
 
 Say the distance in the phrase — *"Create a 10 km route in Runna Router"*,
 *"Make me a 10 km route with Runna Router"* or *"Plan a 10 km run in Runna
-Router"* (1–50 whole kilometres). Siri phrases can only embed an `AppEntity` /
+Router"* (1–50 whole kilometres; "a" or "an", so *"Create an 8 km route…"*
+works too). Siri phrases can only embed an `AppEntity` /
 `AppEnum`, not a `Measurement`, so the spoken distance is a `DistanceEntity`.
 Leave the distance out — *"Create a route in Runna Router"*, *"Make me a route
 with Runna Router"*, *"Generate a run route with Runna Router"* or *"Plan a run
