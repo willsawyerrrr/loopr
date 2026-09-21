@@ -88,7 +88,7 @@ order). The Shortcut needs Location access; grant it on first run.
    Use a **Dictionary** action so `start` stays a real array and `paces` a real
    object. `workout` is the raw multi-line Notes string.
 9. **Get Contents of URL**
-   - URL `https://runna-router.willsawyerrrr.dev/api/route`
+   - URL `https://loopr.willsawyerrrr.dev/api/route`
    - Method `POST`
    - Request Body `JSON`, keys from the dictionary in step 8
    - Headers: `Content-Type: application/json`
@@ -147,7 +147,7 @@ that carries the geometry itself — same page, just a long URL.
   `Response.previewUrl` — an in-app look you dismiss back to the Shortcut. Wrap it
   in a **Choose from Menu** ("Preview" / "Skip") if you don't always want it.
 - **Manual / tuning:** open
-  `https://runna-router.willsawyerrrr.dev/api/route?distanceKm=<km>&start=<lon>,<lat>&hills=<-1..1>&format=html`
+  `https://loopr.willsawyerrrr.dev/api/route?distanceKm=<km>&start=<lon>,<lat>&hills=<-1..1>&format=html`
   in a browser and vary `hills`. (This form *does* re-run Trail Router, so the
   loop may differ slightly from a saved one — fine for comparing settings.)
 
@@ -209,7 +209,7 @@ in-app step (workout → Add Route → file picker).
 
 Not automated — confirm on the device after the function is deployed:
 
-1. `GET https://runna-router.willsawyerrrr.dev/api/route?distanceKm=3&start=<lon>,<lat>`
+1. `GET https://loopr.willsawyerrrr.dev/api/route?distanceKm=3&start=<lon>,<lat>`
    in a browser returns JSON with a `gpx` field.
 2. Save that `gpx` to a `.gpx` file and import it via Runna → planned workout →
    **Add Route** (in-app file picker). Confirmed working; no Strava Premium

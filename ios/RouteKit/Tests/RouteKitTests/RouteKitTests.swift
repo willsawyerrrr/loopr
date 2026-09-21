@@ -6,7 +6,7 @@ import Testing
 
 private let gpxFixture = """
     <?xml version="1.0" encoding="UTF-8"?>
-    <gpx version="1.1" creator="runna-router" xmlns="http://www.topografix.com/GPX/1/1">
+    <gpx version="1.1" creator="loopr" xmlns="http://www.topografix.com/GPX/1/1">
       <trk><name>Loop</name><trkseg>
         <trkpt lat="-33.8688" lon="151.2093"><ele>12.5</ele></trkpt>
         <trkpt lat="-33.8690" lon="151.2100"/>

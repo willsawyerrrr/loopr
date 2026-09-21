@@ -9,7 +9,7 @@ developer team: no App Groups, iCloud/CloudKit or app extensions.
 ```
 ios/
   project.yml            XcodeGen spec for the app (the .xcodeproj is generated, not committed)
-  RunnaRouter/           SwiftUI app target
+  Loopr/                 SwiftUI app target
   RouteKit/              Swift package: API client, models, GPX, SwiftData store
 ```
 
@@ -28,13 +28,13 @@ ios/
   - `StartResolver` / `LastStartStore` — a fresh location fix if one arrives
     within 8 s, otherwise the last start point used, otherwise a clear error.
   - `RouteFormat` — the shared distance / name / subtitle strings.
-- **`RunnaRouter`** is the UI: a *Generate* tab (distance, hills, green, current
+- **`Loopr`** is the UI: a *Generate* tab (distance, hills, green, current
   location as start, map, save, share GPX) and a *Saved* tab (list, detail map,
   swipe to delete, share GPX).
 
 ## Siri and Shortcuts
 
-The intents live in the app target (`RunnaRouter/Intents/`) and run in the app's
+The intents live in the app target (`Loopr/Intents/`) and run in the app's
 own process, so they share the SwiftData store with the UI. No entitlements
 beyond the location usage string are needed.
 
@@ -44,16 +44,16 @@ beyond the location usage string are needed.
 | `CreateRouteIntent` | Takes a distance, generates a loop from the current location (or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
 | `OpenRouteIntent` | Opens a saved route in the app. |
 
-Say the distance in the phrase — *"Create a 10 km route in Runna Router"*,
-*"Make me a 10 km route with Runna Router"* or *"Plan a 10 km run in Runna
-Router"* (1–50 whole kilometres; "a" or "an", so *"Create an 8 km route…"*
+Say the distance in the phrase — *"Create a 10 km route in Loopr"*,
+*"Make me a 10 km route with Loopr"* or *"Plan a 10 km run in
+Loopr"* (1–50 whole kilometres; "a" or "an", so *"Create an 8 km route…"*
 works too). Siri phrases can only embed an `AppEntity` /
 `AppEnum`, not a `Measurement`, so the spoken distance is a `DistanceEntity`.
-Leave the distance out — *"Create a route in Runna Router"*, *"Make me a route
-with Runna Router"*, *"Generate a run route with Runna Router"* or *"Plan a run
-in Runna Router"* — and Siri asks *"How far do you want to run?"*, accepting any
+Leave the distance out — *"Create a route in Loopr"*, *"Make me a route
+with Loopr"*, *"Generate a run route with Loopr"* or *"Plan a run
+in Loopr"* — and Siri asks *"How far do you want to run?"*, accepting any
 length in km or miles (also the parameter when the action is used in a
-Shortcut). *"Open `<route>` in Runna Router"* opens a saved route.
+Shortcut). *"Open `<route>` in Loopr"* opens a saved route.
 
 - **Snippet:** the map is a `MKMapSnapshotter` image with the route drawn on it
   (a live `Map` renders blank in a snippet). **Save** stores the route without
@@ -77,7 +77,7 @@ Shortcut). *"Open `<route>` in Runna Router"* opens a saved route.
 brew install xcodegen
 cd ios
 xcodegen generate
-open RunnaRouter.xcodeproj
+open Loopr.xcodeproj
 ```
 
 Pick your device (or a simulator), set your own team under *Signing &

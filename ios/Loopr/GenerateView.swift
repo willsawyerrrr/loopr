@@ -74,7 +74,7 @@ struct GenerateView: View {
                     withAnimation { proxy.scrollTo("result", anchor: .top) }
                 }
             }
-            .navigationTitle("Runna Router")
+            .navigationTitle("Loopr")
         }
     }
 

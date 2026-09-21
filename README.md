@@ -1,10 +1,11 @@
-# runna-router
+# loopr
 
-A personal Vercel serverless function that turns the next planned run in a
-[Runna](https://runna.com) training plan into a GPX loop route.
+A personal Vercel serverless function that generates a GPX loop route for a run or
+walk.
 
-Given a Runna workout description (or a manual target distance) plus a small
-config, it computes the total target route distance, asks the
+Give it a target distance and a start point, or a
+[Runna](https://runna.com) workout description, which it parses to work out the
+total distance. Using a small config, it asks the
 [Trail Router](https://trailrouter.com) API for a matching loop, picks the
 candidate closest to that distance, and converts it to a GPX 1.1 track.
 

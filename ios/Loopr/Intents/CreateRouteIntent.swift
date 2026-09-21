@@ -53,7 +53,7 @@ struct DistanceEntityQuery: EntityQuery {
     }
 }
 
-/// Backs phrases that say the distance aloud ("Create a 10 km route in Runna Router").
+/// Backs phrases that say the distance aloud ("Create a 10 km route in Loopr").
 struct CreateRouteOfDistanceIntent: AppIntent {
     static let title: LocalizedStringResource = "Create Route of Distance"
     static let supportedModes: IntentModes = [.background]

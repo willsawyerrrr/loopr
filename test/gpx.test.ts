@@ -53,9 +53,9 @@ describe("lineStringToGpx", () => {
     expect(mixed).toContain('<trkpt lat="51.51" lon="-0.12"/>');
   });
 
-  it("declares creator runna-router and GPX 1.1", () => {
+  it("declares creator loopr and GPX 1.1", () => {
     expect(gpx).toContain('version="1.1"');
-    expect(gpx).toContain('creator="runna-router"');
+    expect(gpx).toContain('creator="loopr"');
   });
 
   it("XML-escapes the name", () => {

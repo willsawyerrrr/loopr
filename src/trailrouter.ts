@@ -1,7 +1,7 @@
 import { DEFAULTS } from "./config.js";
 
 const ENDPOINT = "https://trailrouter.com/ors/experimentalroutes";
-const USER_AGENT = "runna-router (personal use)";
+const USER_AGENT = "loopr (personal use)";
 
 export interface TrailRouterRoute {
   distanceMeters: number;

@@ -14,9 +14,9 @@ public enum RouteServiceError: LocalizedError, Sendable {
     }
 }
 
-/// Calls the runna-router API. Reusable from the app UI and from App Intents.
+/// Calls the loopr API. Reusable from the app UI and from App Intents.
 public struct RouteService: Sendable {
-    public static let defaultBaseURL = URL(string: "https://runna-router.willsawyerrrr.dev")!
+    public static let defaultBaseURL = URL(string: "https://loopr.willsawyerrrr.dev")!
 
     public typealias Transport = @Sendable (URLRequest) async throws -> (Data, URLResponse)
 
