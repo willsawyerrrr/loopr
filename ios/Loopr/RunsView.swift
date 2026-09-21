@@ -147,6 +147,15 @@ struct RunDetailView: View {
 
     var body: some View {
         Form {
+            if route == nil {
+                Section {
+                    Text(run.title).font(.headline)
+                    LabeledContent("Date", value: run.date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
+                    if !run.notes.isEmpty {
+                        Text(run.notes).font(.footnote).foregroundStyle(.secondary)
+                    }
+                }
+            }
             if let route {
                 Section {
                     RouteMapView(points: route.points, pins: route.shape?.pins ?? [], interactive: false)
@@ -178,10 +187,16 @@ struct RunDetailView: View {
             }
             Section {
                 ShapeRow(shape: shape) { showShape = true }
-                Button(route == nil ? "Generate route" : "Regenerate", systemImage: "arrow.clockwise") {
-                    generate(regenerate: route != nil)
+                if route == nil {
+                    Button { generate(regenerate: false) } label: {
+                        Label("Generate route", systemImage: "figure.run").frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(generating)
+                } else {
+                    Button("Regenerate", systemImage: "arrow.clockwise") { generate(regenerate: true) }
+                        .disabled(generating)
                 }
-                .disabled(generating)
                 if generating { ProgressView() }
             }
         }
@@ -191,7 +206,6 @@ struct RunDetailView: View {
         .sheet(isPresented: $showShape) {
             ShapeSheet(shape: Binding(get: { shape }, set: { editedShape = $0 }), targetKm: route?.targetDistanceKm)
         }
-        .task { if route == nil { generate(regenerate: false) } }
     }
 
     private func generate(regenerate: Bool) {
