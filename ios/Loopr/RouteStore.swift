@@ -15,21 +15,40 @@ enum RouteStore {
         }
     }()
 
+    /// Saves a route. With an `eventKey`, the route for that calendar run is updated in place if one exists.
     @discardableResult
-    static func save(response: RouteResponse, points: [RoutePoint]) -> SavedRoute {
-        let route = SavedRoute(
-            name: RouteFormat.name(distanceKm: response.route.distanceKm),
-            targetDistanceKm: response.targetDistanceKm,
-            summary: response.route,
-            previewUrl: response.previewUrl,
-            points: points
-        )
-        container.mainContext.insert(route)
+    static func save(
+        response: RouteResponse, points: [RoutePoint], name: String? = nil, eventKey: String? = nil
+    ) -> SavedRoute {
+        let route: SavedRoute
+        if let eventKey, let existing = self.route(forEventKey: eventKey) {
+            existing.update(
+                targetDistanceKm: response.targetDistanceKm, summary: response.route, previewUrl: response.previewUrl,
+                points: points, warnings: response.warnings)
+            route = existing
+        } else {
+            route = SavedRoute(
+                name: name ?? RouteFormat.name(distanceKm: response.route.distanceKm),
+                targetDistanceKm: response.targetDistanceKm,
+                summary: response.route,
+                previewUrl: response.previewUrl,
+                points: points,
+                warnings: response.warnings,
+                eventKey: eventKey
+            )
+            container.mainContext.insert(route)
+        }
         try? container.mainContext.save()
         let entity = RouteEntity(route)
         Task { try? await CSSearchableIndex.default().indexAppEntities([entity]) }
         LooprShortcuts.updateAppShortcutParameters()
         return route
+    }
+
+    static func route(forEventKey key: String) -> SavedRoute? {
+        var descriptor = FetchDescriptor<SavedRoute>(predicate: #Predicate { $0.eventKey == key })
+        descriptor.fetchLimit = 1
+        return (try? container.mainContext.fetch(descriptor))?.first
     }
 
     static func delete(_ route: SavedRoute) {

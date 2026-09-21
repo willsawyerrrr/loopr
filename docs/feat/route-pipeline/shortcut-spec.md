@@ -1,5 +1,13 @@
 # iOS 26 Shortcut Specification
 
+The Loopr iOS app performs the steps below itself: it reads the `Runna`
+calendar, sends the same request to `/api/route`, and keeps its pace table and
+hills/green preferences in the app (see `docs/feat/ios-app/overview.md`). The
+Shortcut is an alternative client of the same endpoint, and its logic doubles
+as the specification of the calendar-to-request mapping the app implements:
+calendar `Runna`, all-day events from the start of today for 8 days, earliest
+first, Notes as `workout`, the event title and the date as `yyyy-MM-dd`.
+
 Two Shortcuts drive the pipeline from the phone:
 
 - **Runna Route** — the daily/on-demand generator.

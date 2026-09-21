@@ -28,26 +28,7 @@ struct GenerateView: View {
                         Stepper(value: $distanceKm, in: 1...50, step: 0.5) {
                             LabeledContent("Distance", value: "\(distanceKm.formatted(.number.precision(.fractionLength(0...1)))) km")
                         }
-                        VStack(alignment: .leading) {
-                            Text("Hills").font(.subheadline)
-                            Slider(value: $hills, in: -1...1, step: 0.25) {
-                                Text("Hills")
-                            } minimumValueLabel: {
-                                Text("Flat").font(.caption)
-                            } maximumValueLabel: {
-                                Text("Hilly").font(.caption)
-                            }
-                        }
-                        VStack(alignment: .leading) {
-                            Text("Green").font(.subheadline)
-                            Slider(value: $green, in: 0...1, step: 0.25) {
-                                Text("Green")
-                            } minimumValueLabel: {
-                                Text("Any").font(.caption)
-                            } maximumValueLabel: {
-                                Text("Green").font(.caption)
-                            }
-                        }
+                        PreferenceSliders()
                         Button(action: generate) {
                             HStack {
                                 Text("Generate route from here")
