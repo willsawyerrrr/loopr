@@ -57,7 +57,7 @@ function stubRouter(body: unknown, init: { status?: number } = {}) {
 const readJson = (res: Response): Promise<any> => res.json();
 
 function postRequest(body: unknown, query = ""): Request {
-  return new Request(`https://runna-router.willsawyerrrr.dev/api/route${query}`, {
+  return new Request(`https://loopr.willsawyerrrr.dev/api/route${query}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -221,7 +221,7 @@ describe("POST /api/route — output formats", () => {
     expect(json.gpx).toContain("<trkpt");
     // no KV store in tests → the inline-token fallback
     expect(json.previewUrl).toMatch(
-      /^https:\/\/runna-router\.willsawyerrrr\.dev\/api\/preview\?r=[A-Za-z0-9_-]+$/,
+      /^https:\/\/loopr\.willsawyerrrr\.dev\/api\/preview\?r=[A-Za-z0-9_-]+$/,
     );
   });
 

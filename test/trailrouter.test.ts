@@ -91,7 +91,7 @@ describe("fetchRoutes — request construction", () => {
     expect(parsed.searchParams.get("avoid_unsafe_streets")).toBe("true");
     expect(parsed.searchParams.get("avoid_unlit_streets")).toBe("true");
     expect(opts?.headers).toMatchObject({
-      "User-Agent": "runna-router (personal use)",
+      "User-Agent": "loopr (personal use)",
     });
   });
 });

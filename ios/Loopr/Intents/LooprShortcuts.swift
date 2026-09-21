@@ -1,6 +1,6 @@
 import AppIntents
 
-struct RunnaRouterShortcuts: AppShortcutsProvider {
+struct LooprShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: CreateRouteOfDistanceIntent(),

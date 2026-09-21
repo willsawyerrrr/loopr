@@ -28,7 +28,7 @@ enum RouteStore {
         try? container.mainContext.save()
         let entity = RouteEntity(route)
         Task { try? await CSSearchableIndex.default().indexAppEntities([entity]) }
-        RunnaRouterShortcuts.updateAppShortcutParameters()
+        LooprShortcuts.updateAppShortcutParameters()
         return route
     }
 
@@ -37,7 +37,7 @@ enum RouteStore {
         container.mainContext.delete(route)
         try? container.mainContext.save()
         Task { try? await CSSearchableIndex.default().deleteAppEntities(identifiedBy: [id], ofType: RouteEntity.self) }
-        RunnaRouterShortcuts.updateAppShortcutParameters()
+        LooprShortcuts.updateAppShortcutParameters()
     }
 
     static func allRoutes() -> [SavedRoute] {

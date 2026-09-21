@@ -2,9 +2,9 @@ import SwiftData
 import SwiftUI
 
 @main
-struct RunnaRouterApp: App {
+struct LooprApp: App {
     init() {
-        RunnaRouterShortcuts.updateAppShortcutParameters()
+        LooprShortcuts.updateAppShortcutParameters()
     }
 
     var body: some Scene {

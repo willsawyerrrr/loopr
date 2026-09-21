@@ -10,7 +10,7 @@ user on their iPhone to import into Runna manually.
 Delivery = an **iOS 26 Shortcut** (calendar read + workout-text hand-off +
 trigger + file hand-off) plus a small **Vercel serverless function** (workout
 parse + Trail Router call + route selection + GeoJSON→GPX) deployed at
-`runna-router.willsawyerrrr.dev`.
+`loopr.willsawyerrrr.dev`.
 
 Architecture is a thin, documented Shortcut (action-by-action spec + config-file
 format, no opaque `.shortcut` in the repo) calling a reviewable TypeScript Vercel
@@ -202,7 +202,7 @@ regardless, so full unattended operation is not the goal.
 - **Preview store (key-value):** the short `previewUrl` (`?id=<12 hex>`) needs a
   Redis-compatible KV store. Add **Upstash for Redis** from the Vercel
   dashboard → Storage → Create Database → free plan → connect to the
-  `runna-router` project; it injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`
+  `loopr` project; it injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`
   (also read as `UPSTASH_REDIS_REST_URL` / `_TOKEN`). Client: `@upstash/redis`.
   Keys `preview:<id>` with a 30-day TTL. The code degrades to the inline
   `?r=<token>` link when the store env vars are absent, so deploying before the
@@ -215,9 +215,9 @@ regardless, so full unattended operation is not the goal.
 - **Node runtime:** 24.x (default), 22.x, 20.x — majors only. Node 20 deprecates
   2026-10-01; target **22.x or 24.x**. Pin via `package.json`
   `"engines": { "node": "22.x" }` (wins over the dashboard setting).
-- **Custom domain `runna-router.willsawyerrrr.dev`:** Vercel dashboard →
+- **Custom domain `loopr.willsawyerrrr.dev`:** Vercel dashboard →
   project → Settings → Domains → Add Domain → enter the subdomain → Vercel shows
-  a project-unique CNAME target → add `CNAME runna-router → <value>` at the DNS
+  a project-unique CNAME target → add `CNAME loopr → <value>` at the DNS
   provider for `willsawyerrrr.dev` → Vercel may require a one-time TXT
   verification if the apex is on another account → cert auto-issues once DNS
   resolves. Per project convention, add this domain to the Vercel project as part
@@ -234,7 +234,7 @@ regardless, so full unattended operation is not the goal.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="runna-router"
+<gpx version="1.1" creator="loopr"
      xmlns="http://www.topografix.com/GPX/1/1"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
@@ -258,7 +258,7 @@ regardless, so full unattended operation is not the goal.
 - ODbL attribution obligations attach to a **publicly used** Produced Work. A
   personal GPX imported into your own watch app is not public.
 - Merely calling the API creates no redistribution obligation.
-- **v1: no attribution legally required.** As courtesy: `creator="runna-router"`
+- **v1: no attribution legally required.** As courtesy: `creator="loopr"`
   on the GPX + a one-line README credit ("Routes via Trail Router, data ©
   OpenStreetMap contributors, ODbL"). Add visible attribution only if the tool is
   ever made public.

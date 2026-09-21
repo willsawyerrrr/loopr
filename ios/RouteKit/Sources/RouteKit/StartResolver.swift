@@ -30,7 +30,7 @@ public struct ResolvedStart: Equatable, Sendable {
 
 public struct StartUnavailableError: LocalizedError, Equatable, Sendable {
     public var errorDescription: String? {
-        "No start location yet. Open Runna Router once and allow location access, then try again."
+        "No start location yet. Open Loopr once and allow location access, then try again."
     }
 }
 

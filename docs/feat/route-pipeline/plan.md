@@ -17,7 +17,7 @@ iOS 26 Shortcut "Runna Route"
   Get Details → Notes (workout text) + Start Date + Title
   Get File → runna-router-config.json (iCloud Drive)   — paces + preferences
   Get Current Location → [lon, lat]
-  POST https://runna-router.willsawyerrrr.dev/api/route
+  POST https://loopr.willsawyerrrr.dev/api/route
        { workout, paces, start, hillsPreference, greenPreference }
         │
         ▼
@@ -204,7 +204,7 @@ export function pickBest(routes: TrailRouterRoute[], targetMeters: number): Trai
   `target_distance=<round(meters)>`, `hills_preference`, `green_preference`,
   `avoid_repetition=true`, `avoid_unsafe_streets=true`,
   `avoid_unlit_streets=true`.
-- Send `User-Agent: runna-router (personal use)`.
+- Send `User-Agent: loopr (personal use)`.
 - Defensive parse against the live schema (research §2 — not the API-docs
   schema): tolerate missing numeric fields (default 0), require
   `geometry.coordinates` non-empty, `routes` non-empty → else throw
@@ -226,7 +226,7 @@ export function lineStringToGpx(
 
 - GPX 1.1, single `<trk><trkseg>`, one `<trkpt lat lon>` per coordinate
   (swapped). Nested `<ele>` only when the tuple carries a finite 3rd value; no
-  `<time>`. `creator="runna-router"`. XML-escape `name`.
+  `<time>`. `creator="loopr"`. XML-escape `name`.
 
 ### `src/route.ts`
 
