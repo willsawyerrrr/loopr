@@ -71,12 +71,14 @@ once a route exists it also shows the distance and a checkmark.
 - **Calendar:** the calendar whose title contains `Runna` (case-insensitive). If
   there is none, the tab prompts you to choose one under *Settings → Calendar*;
   the choice is kept and takes precedence.
-- **Tapping a run** generates its route if it has none: the workout text is the
-  event's Notes, sent with the title, the date (`yyyy-MM-dd`), the start point,
-  the hills/green preferences and the pace table. The start is the current
-  location, or the last start point used. The map, stats, warnings (verbatim),
-  *Share GPX* and *Regenerate* are shown. A run with no Notes reports that it
-  has no workout.
+- **Tapping a run** opens its detail. With no saved route it shows the run's
+  title, date and workout notes, the *Shape route* row and a **Generate route**
+  button; nothing is generated until the button is tapped. Generating sends the
+  workout text (the event's Notes) with the title, the date (`yyyy-MM-dd`), the
+  start point, the shape, the hills/green preferences and the pace table. The
+  start is the current location, or the last start point used. Once a route
+  exists the map, stats, warnings (verbatim), *Share GPX* and *Regenerate* are
+  shown. A run with no Notes reports that it has no workout.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
   event identifier plus date), and appears in *Saved* too. *Regenerate* sends a
   fresh `variant` and updates that same saved route with a different loop.
@@ -98,9 +100,9 @@ NE`, or `Off`).
 - The shape is sent as `waypoints` and `heading` with every request from that
   screen, including regenerations. The result map numbers the pins.
 - On a run, the shape defaults to the one the saved route was generated with and
-  is saved with the route, so *Regenerate* keeps it. A run generates
-  automatically when first opened, so shape a run after that first route and
-  regenerate. Morning refresh reuses the saved shape, or none.
+  is saved with the route, so *Regenerate* keeps it. A run with no route
+  can be shaped before it is first generated. Morning refresh reuses the saved
+  shape, or none.
 - Siri and Shortcuts requests are not shaped.
 
 Limits:
@@ -137,7 +139,7 @@ permission. Each run reschedules the next.
 iOS decides when background refreshes happen and may run them late or not at
 all, notably if the app is rarely opened or Low Power Mode is on. Without a
 location fix in the background it uses the last start point, so open the app
-where you run from. Tapping a run in the *Runs* tab always generates a missing route.
+where you run from. A run's *Generate route* button always generates a missing route.
 
 ## Siri and Shortcuts
 
