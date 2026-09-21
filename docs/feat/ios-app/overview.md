@@ -40,15 +40,19 @@ beyond the location usage string are needed.
 
 | Intent | What it does |
 |---|---|
+| `CreateRouteOfDistanceIntent` | Backs the phrases that say the distance aloud. Takes a whole-kilometre `DistanceEntity` (1–50 km) and otherwise behaves like `CreateRouteIntent`. |
 | `CreateRouteIntent` | Takes a distance, generates a loop from the current location (or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
 | `OpenRouteIntent` | Opens a saved route in the app. |
 
-Say *"Create a route in Runna Router"*, *"Make me a route with Runna Router"*,
-*"Generate a run route with Runna Router"* or *"Plan a run in Runna Router"*;
-Siri asks *"How far do you want to run?"*. Siri phrases can't embed a
-`Measurement`, so the distance is always a follow-up question (or a parameter
-when the action is used in a Shortcut). *"Open `<route>` in Runna Router"*
-opens a saved route.
+Say the distance in the phrase — *"Create a 10 km route in Runna Router"*,
+*"Make me a 10 km route with Runna Router"* or *"Plan a 10 km run in Runna
+Router"* (1–50 whole kilometres). Siri phrases can only embed an `AppEntity` /
+`AppEnum`, not a `Measurement`, so the spoken distance is a `DistanceEntity`.
+Leave the distance out — *"Create a route in Runna Router"*, *"Make me a route
+with Runna Router"*, *"Generate a run route with Runna Router"* or *"Plan a run
+in Runna Router"* — and Siri asks *"How far do you want to run?"*, accepting any
+length in km or miles (also the parameter when the action is used in a
+Shortcut). *"Open `<route>` in Runna Router"* opens a saved route.
 
 - **Snippet:** the map is a `MKMapSnapshotter` image with the route drawn on it
   (a live `Map` renders blank in a snippet). **Save** stores the route without
