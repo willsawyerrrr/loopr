@@ -10,8 +10,9 @@ developer team: no App Groups, iCloud/CloudKit or app extensions.
 ```
 ios/
   project.yml            XcodeGen spec for the app (the .xcodeproj is generated, not committed)
-  Loopr/                 SwiftUI app target
+  Loopr/                 SwiftUI app target (Assets.xcassets holds the app icon)
   RouteKit/              Swift package: API client, models, GPX, SwiftData store
+docs/brand/loopr-icon.svg  Source of the app icon (rendered to 1024 px in the asset catalog)
 ```
 
 - **`RouteKit`** holds everything the UI and the App Intents share:
