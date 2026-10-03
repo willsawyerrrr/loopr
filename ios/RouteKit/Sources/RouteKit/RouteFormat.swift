@@ -15,4 +15,9 @@ public enum RouteFormat {
     public static func subtitle(distanceKm: Double, ascentM: Double) -> String {
         "\(distance(km: distanceKm)) · \(Int(ascentM.rounded())) m climb"
     }
+
+    /// e.g. `25 min`, `1 h 05 min`.
+    public static func duration(minutes: Int) -> String {
+        minutes < 60 ? "\(minutes) min" : "\(minutes / 60) h \(String(format: "%02d", minutes % 60)) min"
+    }
 }

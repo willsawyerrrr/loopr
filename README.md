@@ -41,6 +41,8 @@ Invalid pins or heading are a `400`. The response then carries
 anchors (bulge position and side, heading spread) without breaking pin-through
 routing.
 
+`route.estimatedMinutes` estimates the run's duration: the workout's own timing, or the route distance at a 7.5 min/km pace for a plain `targetDistanceKm`.
+
 `coordinates` is the chosen route as `[lon, lat, ele?]` points, so a client can
 draw it without parsing the GPX. The response also carries a `previewUrl` — a short link
 (`/api/preview?id=…`, backed by a KV store, 30-day expiry) to a Leaflet map of

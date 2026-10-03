@@ -86,7 +86,7 @@ once a route exists it also shows the distance and a checkmark.
   start point, the shape, the hills/green preferences and the pace table. The
   start is the shape's chosen start, else the default start, else the current
   location, else the last start point used. Once a route
-  exists the map, where it started from, stats, warnings (verbatim), *Share GPX*
+  exists the map, where it started from, stats (distance, estimated time, climb), warnings (verbatim), *Share GPX*
   and *Regenerate* are shown. A run with no Notes reports that it has no workout.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
   event identifier plus date), and appears in *Saved* too. *Regenerate* sends a

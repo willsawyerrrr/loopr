@@ -26,6 +26,7 @@ const DATA: PreviewData = {
     ascentM: 60,
     descentM: 60,
     elevationGainPerKm: 18.9,
+    estimatedMinutes: 25,
     hilliness: "rolling",
     greenScore: 0.4,
   },
