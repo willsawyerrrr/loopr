@@ -1,0 +1,2 @@
+// Local overrides (gitignored), e.g. `DEVELOPMENT_TEAM = <team id>`; see `Local.example.xcconfig`.
+#include? "Local.xcconfig"

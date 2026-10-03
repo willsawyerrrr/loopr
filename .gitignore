@@ -9,3 +9,4 @@ ios/RouteKit/.swiftpm/
 xcuserdata/
 DerivedData/
 .DS_Store
+ios/Config/Local.xcconfig

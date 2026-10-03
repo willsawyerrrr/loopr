@@ -312,8 +312,9 @@ xcodegen generate
 open Loopr.xcodeproj
 ```
 
-Pick your device (or a simulator), set your own team under *Signing &
-Capabilities* (`DEVELOPMENT_TEAM` is not committed), and run. Calendar runs
+Copy `Config/Local.example.xcconfig` to `Config/Local.xcconfig` (gitignored) and
+set your `DEVELOPMENT_TEAM`, so the signing team survives regenerating the
+project. Then pick your device (or a simulator) and run. Calendar runs
 need a device (or simulator) with the Runna calendar subscribed. On a device with a
 free team the install expires after 7 days; re-run from Xcode to renew it.
 
