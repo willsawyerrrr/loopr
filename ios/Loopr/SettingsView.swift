@@ -15,6 +15,7 @@ struct SettingsView: View {
 
     @State private var calendars: [CalendarSummary] = []
     @State private var rows = PaceStore().paces.sorted { $0.key < $1.key }.map { PaceRow(phrase: $0.key, pace: $0.value) }
+    @State private var runPace = PaceStore().runPace
     @State private var notificationsDenied = false
     @State private var defaultStart = DefaultStartStore().value
     @State private var showDefaultStart = false
@@ -55,6 +56,15 @@ struct SettingsView: View {
                 Section("Route preferences") { PreferenceSliders() }
 
                 Section {
+                    HStack {
+                        Text("Run pace")
+                        Spacer()
+                        TextField("min/km", value: $runPace, format: .number.precision(.fractionLength(0...2)))
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .frame(width: 60)
+                        Text("min/km").foregroundStyle(.secondary)
+                    }
                     ForEach($rows) { $row in
                         HStack {
                             TextField("Pace phrase", text: $row.phrase)
@@ -72,7 +82,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Paces")
                 } footer: {
-                    Text("Runna pace phrases and how fast you run them, used to work out each workout's distance. Add a phrase when a route warns that its pace isn't configured.")
+                    Text("Run pace is how fast you run when a workout gives no pace, and is used to estimate how long a run takes. Pace phrases are how fast you run each Runna pace, used to work out each workout's distance. Add a phrase when a route warns that its pace isn't configured.")
                 }
 
                 Section {
@@ -96,6 +106,7 @@ struct SettingsView: View {
             .onAppear { calendars = RunCalendar.access == .granted ? RunCalendar.calendars().sorted { $0.title < $1.title } : [] }
             .sheet(isPresented: $showDefaultStart) { DefaultStartPicker(place: $defaultStart) }
             .onChange(of: defaultStart) { DefaultStartStore().save(defaultStart) }
+            .onChange(of: runPace) { PaceStore().runPace = runPace }
             .onChange(of: rows) {
                 PaceStore().save(
                     Dictionary(

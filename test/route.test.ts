@@ -152,6 +152,15 @@ describe("POST /api/route — error branches", () => {
     expect((await readJson(res)).error).toMatch(/target distance/i);
   });
 
+  it("estimates a plain-distance run at the configured runPace", async () => {
+    stubRouter(ROUTER_BODY);
+    const res = await POST(
+      postRequest({ targetDistanceKm: 3, start: START, runPace: 6 }),
+    );
+    const json = await readJson(res);
+    expect(json.route.estimatedMinutes).toBe(Math.round(json.route.distanceKm * 6));
+  });
+
   it("502 when Trail Router fails", async () => {
     stubRouter("upstream down", { status: 503 });
     const res = await POST(postRequest({ targetDistanceKm: 3, start: START }));

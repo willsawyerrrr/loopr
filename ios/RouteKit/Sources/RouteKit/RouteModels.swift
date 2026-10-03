@@ -14,6 +14,8 @@ public struct RouteRequest: Encodable, Sendable {
     public var date: String?
     /// Pace phrase (lowercased) to minutes per km.
     public var paces: [String: Double]?
+    /// Minutes per km for runs without a stated pace; filled from `PaceStore` when `nil`.
+    public var runPace: Double?
     /// Asks the server for a different loop than the one a request without it returns; omitted when `nil`.
     public var variant: Int?
     /// Points the loop should pass through, in `[lon, lat]` order; omitted when `nil`.

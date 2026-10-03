@@ -41,7 +41,7 @@ Invalid pins or heading are a `400`. The response then carries
 anchors (bulge position and side, heading spread) without breaking pin-through
 routing.
 
-`route.estimatedMinutes` estimates the run's duration: the workout's own timing, or the route distance at a 7.5 min/km pace for a plain `targetDistanceKm`.
+`route.estimatedMinutes` estimates the run's duration: the workout's own timing, or the route distance at `runPace` min/km (default 7.5; body field or query param) for a plain `targetDistanceKm`. `runPace` is also the pace for run segments without a configured one.
 
 `coordinates` is the chosen route as `[lon, lat, ele?]` points, so a client can
 draw it without parsing the GPX. The response also carries a `previewUrl` — a short link

@@ -119,6 +119,15 @@ private func event(
         #expect(store().paces == ["walking": 11.0, "conversational pace": 7.5])
     }
 
+    @Test func runPaceDefaultsAndSaves() {
+        let store = store()
+        #expect(store.runPace == 7.5)
+        store.runPace = 6.25
+        #expect(store.runPace == 6.25)
+        store.runPace = 0
+        #expect(store.runPace == 6.25)
+    }
+
     @Test func savesCleanedPaces() {
         let store = store()
         store.save([" Tempo Pace ": 5.0, "": 6, "bad": 0, "walking": 12])

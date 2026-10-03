@@ -86,6 +86,7 @@ function buildConfig(
   hillsPreference: unknown,
   greenPreference: unknown,
   paces: unknown,
+  runPace: unknown,
 ): RouteConfig {
   return {
     start,
@@ -94,6 +95,9 @@ function buildConfig(
     greenPreference:
       typeof greenPreference === "number" ? greenPreference : DEFAULTS.greenPreference,
     paces: mergePaces(paces),
+    ...(typeof runPace === "number" && Number.isFinite(runPace) && runPace > 0
+      ? { runPaceMinPerKm: runPace }
+      : {}),
   };
 }
 
@@ -187,6 +191,7 @@ export async function POST(request: Request): Promise<Response> {
         body["hillsPreference"],
         body["greenPreference"],
         body["paces"],
+        body["runPace"],
       ),
     },
     format,
@@ -228,6 +233,7 @@ export async function GET(request: Request): Promise<Response> {
         params.has("hills") ? Number(params.get("hills")) : undefined,
         params.has("green") ? Number(params.get("green")) : undefined,
         undefined,
+        params.has("runPace") ? Number(params.get("runPace")) : undefined,
       ),
     },
     format,
