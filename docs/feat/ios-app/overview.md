@@ -34,7 +34,7 @@ ios/
     earliest first, builds the workout request from an event, chooses the
     calendar (`Runna`, case-insensitive contains, unless one is chosen) and
     computes the next 06:00.
-  - `PaceStore` — the pace table (phrase to min/km) in `UserDefaults`, seeded
+  - `PaceStore` — the run pace and the pace table (phrase to min/km) in `UserDefaults`, seeded
     with the defaults from `src/config.ts`.
   - `RouteResponse` — decodes `gpx`, `filename`, `route`, `warnings`,
     `previewUrl`, `coordinates`, `segments` and `checksum`. `resolvedPoints()`
@@ -151,7 +151,9 @@ A gear on the *Runs* tab opens:
   *Generate* tab and Siri use.
 - **Paces** — an editable table of Runna pace phrase to min/km, seeded with the
   server defaults and sent as `paces` with each workout. When the server warns
-  that a pace isn't configured, add the phrase here and regenerate.
+  that a pace isn't configured, add the phrase here and regenerate. *Run pace*
+  (default 7.5 min/km) is sent as `runPace` with every request: it paces run
+  segments without a configured phrase and estimates a plain-distance run's time.
 - **Prepare routes each morning** — off by default; see below.
 
 ## Morning refresh

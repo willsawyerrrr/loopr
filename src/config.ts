@@ -7,6 +7,8 @@ export interface RouteConfig {
   greenPreference?: number;
   /** Pace phrase (lowercased) → minutes per km. */
   paces: Record<string, number>;
+  /** Minutes per km for runs without a stated pace, and for estimating a plain-distance run. Defaults to `DEFAULTS.fallbackRunPaceMinPerKm`. */
+  runPaceMinPerKm?: number;
 }
 
 export const DEFAULTS = {

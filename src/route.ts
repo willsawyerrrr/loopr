@@ -117,6 +117,7 @@ export async function generateRoute(
     );
   }
 
+  const runPace = config.runPaceMinPerKm ?? DEFAULTS.fallbackRunPaceMinPerKm;
   let segments: Segment[] = [];
   let checksum = EMPTY_CHECKSUM;
   const warnings: string[] = [];
@@ -124,7 +125,7 @@ export async function generateRoute(
 
   if (hasWorkout) {
     const parsed = parseWorkout(workout, config.paces, {
-      fallbackRunPaceMinPerKm: DEFAULTS.fallbackRunPaceMinPerKm,
+      fallbackRunPaceMinPerKm: runPace,
     });
     if (parsed.targetDistanceMeters <= 0) {
       throw new RouteParseError(
@@ -209,7 +210,7 @@ export async function generateRoute(
 
   const estimatedMinutes = hasWorkout
     ? checksum.computedMinutes
-    : (best.distanceMeters / 1000) * DEFAULTS.fallbackRunPaceMinPerKm;
+    : (best.distanceMeters / 1000) * runPace;
 
   return {
     gpx: lineStringToGpx(best.coordinates, name),

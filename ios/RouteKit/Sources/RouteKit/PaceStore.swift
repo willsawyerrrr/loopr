@@ -9,7 +9,11 @@ public struct PaceStore: @unchecked Sendable {
     ]
 
     private let defaults: UserDefaults
+    /// Mirrors `DEFAULTS.fallbackRunPaceMinPerKm` in `src/config.ts`.
+    public static let defaultRunPace = 7.5
+
     private let key = "paces"
+    private let runPaceKey = "runPace"
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -19,6 +23,17 @@ public struct PaceStore: @unchecked Sendable {
     public var paces: [String: Double] {
         defaults.data(forKey: key).flatMap { try? JSONDecoder().decode([String: Double].self, from: $0) }
             ?? Self.defaults
+    }
+
+    /// Minutes per km for runs without a pace phrase, and for estimating a plain-distance run.
+    public var runPace: Double {
+        get {
+            let saved = defaults.double(forKey: runPaceKey)
+            return saved > 0 ? saved : Self.defaultRunPace
+        }
+        nonmutating set {
+            if newValue > 0, newValue.isFinite { defaults.set(newValue, forKey: runPaceKey) }
+        }
     }
 
     /// Saves `paces` with trimmed, lowercased phrases, dropping blank phrases and non-positive paces.

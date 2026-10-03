@@ -36,6 +36,8 @@ public struct RouteService: Sendable {
 
     /// Posts `request`; `timeout` overrides the service's default for this call.
     public func generate(_ request: RouteRequest, timeout: TimeInterval? = nil) async throws -> RouteResponse {
+        var request = request
+        request.runPace = request.runPace ?? PaceStore().runPace
         var urlRequest = URLRequest(url: baseURL.appending(path: "api/route"))
         urlRequest.httpMethod = "POST"
         urlRequest.timeoutInterval = timeout ?? self.timeout
