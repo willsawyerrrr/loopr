@@ -2,7 +2,7 @@
 
 A native SwiftUI iOS 26 app that generates, views, saves and exports routes by
 calling `POST /api/route`. It reads the subscribed Runna calendar itself, so
-upcoming runs turn into routes without the "Runna Route" Shortcut. It is a personal app built for a free Apple
+upcoming runs turn into routes. It is a personal app built for a free Apple
 developer team: no App Groups, iCloud/CloudKit or app extensions.
 
 ## Layout

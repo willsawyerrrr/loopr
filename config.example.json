@@ -1,8 +1,0 @@
-{
-  "hillsPreference": 0.0,
-  "greenPreference": 0.0,
-  "paces": {
-    "walking": 11.0,
-    "conversational pace": 7.5
-  }
-}
