@@ -97,6 +97,7 @@ describe("POST /api/route — workout happy path", () => {
     expect(json.route.ascentM).toBe(60);
     expect(json.route.elevationGainPerKm).toBe(18.9);
     expect(json.route.hilliness).toBe("rolling");
+    expect(json.route.estimatedMinutes).toBe(Math.round(json.checksum.computedMinutes));
     expect(json.segments.length).toBeGreaterThan(0);
 
     // target_distance sent to Trail Router is the parsed sum, rounded

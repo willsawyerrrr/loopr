@@ -28,7 +28,8 @@ struct RouteResultSections: View {
                 ascentM: response.route.ascentM,
                 descentM: response.route.descentM,
                 hilliness: response.route.hilliness,
-                elevationGainPerKm: response.route.elevationGainPerKm
+                elevationGainPerKm: response.route.elevationGainPerKm,
+                estimatedMinutes: response.route.estimatedMinutes
             )
             if let startLabel { StartedFromLabel(label: startLabel) }
             ForEach(response.warnings, id: \.self) { warning in

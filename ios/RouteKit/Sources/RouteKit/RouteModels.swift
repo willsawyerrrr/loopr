@@ -72,6 +72,8 @@ public struct RouteSummary: Codable, Hashable, Sendable {
     public var elevationGainPerKm: Double
     public var hilliness: String
     public var greenScore: Double
+    /// Estimated time to cover the route, in minutes.
+    public var estimatedMinutes: Int?
 }
 
 /// The JSON returned by `POST /api/route`.

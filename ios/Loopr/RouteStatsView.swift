@@ -7,10 +7,15 @@ struct RouteStatsView: View {
     let descentM: Double
     let hilliness: String
     let elevationGainPerKm: Double
+    var estimatedMinutes: Int?
 
     var body: some View {
         HStack {
             stat("Distance", distanceKm.formatted(.number.precision(.fractionLength(0...2))) + " km")
+            if let estimatedMinutes {
+                Divider()
+                stat("Time", RouteFormat.duration(minutes: estimatedMinutes))
+            }
             Divider()
             stat("Climb", "\(Int(ascentM.rounded())) m")
             Divider()

@@ -26,6 +26,8 @@ export interface RouteResult {
     ascentM: number;
     descentM: number;
     elevationGainPerKm: number;
+    /** Estimated time to cover the route: the workout's own timing, or the distance at the fallback run pace. */
+    estimatedMinutes: number;
     hilliness: Hilliness;
     greenScore: number;
     overriddenParameters?: Record<string, unknown>;
@@ -205,6 +207,10 @@ export async function generateRoute(
       ? best.ascentMeters / (best.distanceMeters / 1000)
       : 0;
 
+  const estimatedMinutes = hasWorkout
+    ? checksum.computedMinutes
+    : (best.distanceMeters / 1000) * DEFAULTS.fallbackRunPaceMinPerKm;
+
   return {
     gpx: lineStringToGpx(best.coordinates, name),
     coordinates: best.coordinates,
@@ -215,6 +221,7 @@ export async function generateRoute(
       ascentM: round1(best.ascentMeters),
       descentM: round1(best.descentMeters),
       elevationGainPerKm: round1(gainPerKm),
+      estimatedMinutes: Math.round(estimatedMinutes),
       hilliness: hilliness(gainPerKm),
       greenScore: round2(best.greenScore),
       ...(best.overriddenParameters
