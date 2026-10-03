@@ -321,13 +321,18 @@ free team the install expires after 7 days; re-run from Xcode to renew it.
 
 ### Install without Xcode
 
-`ios/scripts/deploy-to-device.sh` pulls `main`, builds with `xcodebuild` and
-installs on the paired iPhone with `devicectl`. It skips unless `main` has new
-commits or the last install is older than 5 days (`LOOPR_MAX_AGE_DAYS`);
-`--force` always installs, and `LOOPR_DEVICE` picks a device. Run
-`ios/scripts/install-deploy-agent.sh` from the `main` worktree to install a launchd agent
-that runs it hourly and at login, retrying until the phone is reachable. This
-keeps a free team's 7-day install fresh. Logs: `~/Library/Logs/loopr-deploy.log`.
+The shared `deploy-to-device` and `install-deploy-agent` scripts in
+[`willsawyerrrr/platform`](https://github.com/willsawyerrrr/platform/blob/main/docs/ios-device-deploy.md)
+pull `main`, build with `xcodebuild` and install on the paired iPhone, skipping
+unless `main` has new commits or the last install is older than 5 days. From
+the platform `main` worktree, run:
+
+```sh
+scripts/install-deploy-agent --name loopr --repo <loopr main worktree> --scheme Loopr
+```
+
+This installs a launchd agent that runs it hourly and at login, keeping a free
+team's 7-day install fresh. Logs: `~/Library/Logs/loopr-deploy.log`.
 
 In the simulator, set a location first (*Features → Location*, or
 `xcrun simctl location booted set <lat>,<lon>`).
