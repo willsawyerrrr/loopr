@@ -189,7 +189,7 @@ populate groups, so prefer explicit character classes over the `i` flag.
 `Split Text` (newlines / custom separator).
 
 **Files:** `Save File` (turn off "Ask where to save" to write a fixed path like
-`Shortcuts/runna-router-config.json`), `Get File` (read the config JSON back),
+`Shortcuts/loopr-config.json`), `Get File` (read the config JSON back),
 `Share` / `Open In` to hand a saved file to another app.
 
 **Ask for Input:** Text / Number / URL / Date — used for the pace editor and the

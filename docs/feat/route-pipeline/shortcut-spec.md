@@ -20,7 +20,7 @@ generate wherever you set off, not only at home.
 
 ## Config file
 
-**Path:** `iCloud Drive / Shortcuts / runna-router-config.json`
+**Path:** `iCloud Drive / Shortcuts / loopr-config.json`
 (the folder `Save File` writes to by default when "Ask where to save" is off).
 
 ```json
@@ -51,7 +51,7 @@ order). The Shortcut needs Location access; grant it on first run.
 ### Actions
 
 1. **Get File** — Service: iCloud Drive, Path:
-   `Shortcuts/runna-router-config.json`, "Show Document Picker" off.
+   `Shortcuts/loopr-config.json`, "Show Document Picker" off.
 2. **Get Dictionary from Input** (the file contents) → `Config`.
 3. **Build the date window** — a run planned for today is an all-day event whose
    start is 00:00 today, i.e. already in the past by the time the Shortcut runs,
@@ -179,7 +179,7 @@ JSON by hand.
 
 ### Actions
 
-1. **Get File** — `Shortcuts/runna-router-config.json` →
+1. **Get File** — `Shortcuts/loopr-config.json` →
    **Get Dictionary from Input** → `Config`.
 2. **Get Dictionary Value** — `paces` from `Config` → `Paces`.
 3. **Ask for Input** — Text, "Pace phrase (exactly as Runna writes it, e.g.
@@ -193,7 +193,7 @@ JSON by hand.
 8. **Get Dictionary from Input** is not needed; use **Get File Contents** helper:
    convert `Config` back to text with **Get Text from Input** (Shortcuts
    serialises a dictionary to JSON).
-9. **Save File** — `Shortcuts/runna-router-config.json`, "Ask Where to Save" off,
+9. **Save File** — `Shortcuts/loopr-config.json`, "Ask Where to Save" off,
    "Overwrite If File Exists" on.
 10. **Show Notification** — "Saved `PhraseKey` = `MinPerKm` min/km".
 

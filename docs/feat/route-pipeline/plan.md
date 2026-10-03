@@ -15,7 +15,7 @@ user on their iPhone to import into Runna manually.
 iOS 26 Shortcut "Runna Route"
   Find Calendar Events (Runna cal, all-day, start of today → +8 days)
   Get Details → Notes (workout text) + Start Date + Title
-  Get File → runna-router-config.json (iCloud Drive)   — paces + preferences
+  Get File → loopr-config.json (iCloud Drive)   — paces + preferences
   Get Current Location → [lon, lat]
   POST https://loopr.willsawyerrrr.dev/api/route
        { workout, paces, start, hillsPreference, greenPreference }
@@ -38,7 +38,7 @@ iOS 26 Shortcut "Runna Route"
   Import into Runna manually: workout → Add Route → file picker
 ```
 
-Companion Shortcut **"Update Runna Paces"** edits `runna-router-config.json`.
+Companion Shortcut **"Update Runna Paces"** edits `loopr-config.json`.
 
 ## Repo layout
 
