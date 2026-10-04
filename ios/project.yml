@@ -33,6 +33,7 @@ targets:
         NSCalendarsFullAccessUsageDescription: Loopr reads your Runna calendar to find your upcoming runs and their workouts.
         BGTaskSchedulerPermittedIdentifiers: [dev.willsawyerrrr.loopr.refresh]
         UIBackgroundModes: [fetch]
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.willsawyerrrr.loopr
