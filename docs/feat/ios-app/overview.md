@@ -160,7 +160,7 @@ A gear on the *Runs* tab opens:
 ## Morning refresh
 
 With *Prepare routes each morning* on, the app schedules a background app
-refresh (`BGAppRefreshTask`, `dev.willsawyerrrr.Loopr.refresh`) for the next
+refresh (`BGAppRefreshTask`, `dev.willsawyerrrr.loopr.refresh`) for the next
 06:00 local. When it runs, it generates the route for today's run (or the next
 one) if it doesn't have one, saves it, and posts a notification "Route ready:
 `<title>` · `<distance>`". Turning the setting on asks for notification
