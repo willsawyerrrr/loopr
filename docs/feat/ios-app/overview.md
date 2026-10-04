@@ -160,7 +160,7 @@ A gear on the *Runs* tab opens:
 ## Morning refresh
 
 With *Prepare routes each morning* on, the app schedules a background app
-refresh (`BGAppRefreshTask`, `dev.willsawyerrrr.Loopr.refresh`) for the next
+refresh (`BGAppRefreshTask`, `dev.willsawyerrrr.loopr.refresh`) for the next
 06:00 local. When it runs, it generates the route for today's run (or the next
 one) if it doesn't have one, saves it, and posts a notification "Route ready:
 `<title>` · `<distance>`". Turning the setting on asks for notification
@@ -342,7 +342,7 @@ workflow on every push to `main` that touches `ios/`, uploading a build to
 TestFlight (build number = run number). It needs the `ASC_KEY_ID`,
 `ASC_ISSUER_ID` and `ASC_KEY_P8` repository secrets, the `DEVELOPMENT_TEAM`
 repository variable, and a Loopr app record in App Store Connect
-(`dev.willsawyerrrr.Loopr`).
+(`dev.willsawyerrrr.loopr`).
 
 In the simulator, set a location first (*Features → Location*, or
 `xcrun simctl location booted set <lat>,<lon>`).

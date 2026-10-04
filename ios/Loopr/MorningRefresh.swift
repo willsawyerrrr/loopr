@@ -6,7 +6,7 @@ import UserNotifications
 /// Prepares the next run's route in a background refresh around 06:00. iOS decides when (and whether) it runs.
 @MainActor
 enum MorningRefresh {
-    static let identifier = "dev.willsawyerrrr.Loopr.refresh"
+    static let identifier = "dev.willsawyerrrr.loopr.refresh"
     static let enabledKey = "prepareRoutesEachMorning"
 
     private static var isEnabled: Bool { UserDefaults.standard.bool(forKey: enabledKey) }
