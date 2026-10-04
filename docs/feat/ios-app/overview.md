@@ -334,6 +334,16 @@ scripts/install-deploy-agent --name loopr --repo <loopr main worktree> --scheme 
 This installs a launchd agent that runs it hourly and at login, keeping a free
 team's 7-day install fresh. Logs: `~/Library/Logs/loopr-deploy.log`.
 
+### TestFlight
+
+`.github/workflows/deploy-ios.yml` calls the platform repo's
+[`ios-testflight`](https://github.com/willsawyerrrr/platform/blob/main/docs/ios-testflight.md)
+workflow on every push to `main` that touches `ios/`, uploading a build to
+TestFlight (build number = run number). It needs the `ASC_KEY_ID`,
+`ASC_ISSUER_ID` and `ASC_KEY_P8` repository secrets, the `DEVELOPMENT_TEAM`
+repository variable, and a Loopr app record in App Store Connect
+(`dev.willsawyerrrr.Loopr`).
+
 In the simulator, set a location first (*Features → Location*, or
 `xcrun simctl location booted set <lat>,<lon>`).
 
