@@ -342,7 +342,7 @@ workflow on every push to `main` that touches `ios/`, uploading a build to
 TestFlight (build number = run number). It needs the `ASC_KEY_ID`,
 `ASC_ISSUER_ID` and `ASC_KEY_P8` repository secrets, the `DEVELOPMENT_TEAM`
 repository variable, and a Loopr app record in App Store Connect
-(`dev.willsawyerrrr.Loopr`).
+(`dev.willsawyerrrr.loopr`).
 
 In the simulator, set a location first (*Features → Location*, or
 `xcrun simctl location booted set <lat>,<lon>`).
