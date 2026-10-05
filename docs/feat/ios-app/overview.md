@@ -389,3 +389,7 @@ after installing.
 
 Sharing a route produces a `.gpx` file. Save it to Files, then import it in
 Runna: planned workout → **Add Route** → file picker.
+
+The imported route draws on Apple Watch in the Run app for a structured
+workout (warm-up, distance intervals, timed walk, cool-down), including during
+the interval blocks.
