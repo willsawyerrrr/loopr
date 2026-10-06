@@ -18,6 +18,13 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  routekit:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - run: swift test
+        working-directory: ios/RouteKit
+
   pre-commit:
     runs-on: ubuntu-latest
     steps:
