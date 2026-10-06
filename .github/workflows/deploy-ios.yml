@@ -3,7 +3,7 @@ name: Deploy iOS
 on:
   push:
     branches: [main]
-    paths: ['ios/**']
+    paths: ["ios/**"]
   workflow_dispatch:
 
 concurrency: deploy-ios

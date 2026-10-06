@@ -59,13 +59,7 @@ describe("nudgeStart", () => {
 
 describe("chooseCandidate", () => {
   const target = 5000;
-  const routes = [
-    route(3600),
-    route(4800),
-    route(5040),
-    route(5200),
-    route(6500),
-  ];
+  const routes = [route(3600), route(4800), route(5040), route(5200), route(6500)];
 
   it("variant 0 is the closest to target", () => {
     expect(chooseCandidate(routes, target, 0).distanceMeters).toBe(5040);
@@ -76,9 +70,9 @@ describe("chooseCandidate", () => {
     for (let v = 1; v <= 50; v++) {
       const picked = chooseCandidate(routes, target, v);
       expect(picked).toBe(chooseCandidate([...routes].reverse(), target, v));
-      expect(
-        Math.abs(picked.distanceMeters - target) / target,
-      ).toBeLessThanOrEqual(DEFAULTS.variantTolerance);
+      expect(Math.abs(picked.distanceMeters - target) / target).toBeLessThanOrEqual(
+        DEFAULTS.variantTolerance,
+      );
       seen.add(picked.distanceMeters);
     }
     expect([...seen].sort()).toEqual([4800, 5040, 5200]);

@@ -36,7 +36,9 @@ describe("lineStringToGpx", () => {
       ],
       "Hilly loop",
     );
-    expect(withEle).toContain('<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>');
+    expect(withEle).toContain(
+      '<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>',
+    );
     expect(withEle).toContain('<trkpt lat="51.51" lon="-0.12"><ele>30</ele></trkpt>');
     expect(withEle).not.toContain("<time>");
   });

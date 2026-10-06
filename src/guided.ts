@@ -41,11 +41,7 @@ export function bearing(a: LonLat, b: LonLat): number {
 }
 
 /** The point `distanceM` from `from` along `bearingDeg`. */
-export function destination(
-  from: LonLat,
-  bearingDeg: number,
-  distanceM: number,
-): LonLat {
+export function destination(from: LonLat, bearingDeg: number, distanceM: number): LonLat {
   const angular = distanceM / EARTH_RADIUS_M;
   const theta = rad(bearingDeg);
   const lat1 = rad(from[1]);
@@ -159,7 +155,12 @@ export function validateGuidance(
 
   let normalized: number | null = null;
   if (heading !== undefined && heading !== null) {
-    if (typeof heading !== "number" || !Number.isFinite(heading) || heading < 0 || heading > 360) {
+    if (
+      typeof heading !== "number" ||
+      !Number.isFinite(heading) ||
+      heading < 0 ||
+      heading > 360
+    ) {
       throw new GuidanceError("`heading` must be a number of degrees from 0 to 360");
     }
     normalized = normalizeHeading(heading);
@@ -188,11 +189,7 @@ const closedLength = (start: LonLat, anchors: LonLat[]): number =>
   pathLength([start, ...anchors, start]);
 
 /** The size whose straight-line perimeter is `perimeter`, clamped to the shape's range. */
-export function sizeForPerimeter(
-  shape: Shape,
-  start: LonLat,
-  perimeter: number,
-): number {
+export function sizeForPerimeter(shape: Shape, start: LonLat, perimeter: number): number {
   let lo = shape.minSize;
   let hi = shape.maxSize;
   if (closedLength(start, shape.anchors(lo)) >= perimeter) return lo;
@@ -208,7 +205,10 @@ export function sizeForPerimeter(
 function permutations<T>(items: T[]): T[][] {
   if (items.length <= 1) return [items];
   return items.flatMap((item, i) =>
-    permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [item, ...rest]),
+    permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [
+      item,
+      ...rest,
+    ]),
   );
 }
 
@@ -246,7 +246,8 @@ function pinShape(
 
   let leg = 0;
   for (let i = 1; i < path.length - 1; i++) {
-    if (haversine(path[i]!, path[i + 1]!) > haversine(path[leg]!, path[leg + 1]!)) leg = i;
+    if (haversine(path[i]!, path[i + 1]!) > haversine(path[leg]!, path[leg + 1]!))
+      leg = i;
   }
   const from = path[leg]!;
   const to = path[leg + 1]!;
@@ -275,7 +276,14 @@ function pinShape(
     const [first, second] = sides as [number, number];
     const gap = haversine(reach(first), centre) - haversine(reach(second), centre);
     // A single pin has no interior, so either side makes a loop; the seed picks.
-    side = Math.abs(gap) > 1 ? (gap > 0 ? first : second) : rand() < 0.5 || variant === 0 ? first : second;
+    side =
+      Math.abs(gap) > 1
+        ? gap > 0
+          ? first
+          : second
+        : rand() < 0.5 || variant === 0
+          ? first
+          : second;
   }
 
   const minSize = ordered.length < 2 ? 0.15 * legLength : 0;
@@ -300,7 +308,8 @@ function headingShape(
   variant: number,
 ): Shape {
   const rand = mulberry32(variant ^ GUIDED_SALT);
-  const spread = DEFAULTS.guided.headingSpreadDegrees + (variant > 0 ? (rand() - 0.5) * 10 : 0);
+  const spread =
+    DEFAULTS.guided.headingSpreadDegrees + (variant > 0 ? (rand() - 0.5) * 10 : 0);
   const centre = heading + (variant > 0 ? (rand() - 0.5) * 20 : 0);
   const shape: Shape = {
     kind: "heading",
@@ -332,7 +341,13 @@ export function planShape(
   variant = 0,
 ): Shape {
   if (guidance.waypoints.length > 0) {
-    const shape = pinShape(start, guidance.waypoints, guidance.heading, targetMeters, variant);
+    const shape = pinShape(
+      start,
+      guidance.waypoints,
+      guidance.heading,
+      targetMeters,
+      variant,
+    );
     if (shape.minSize > 0) {
       shape.probeSize = sizeForPerimeter(
         shape,
@@ -442,7 +457,8 @@ export async function generateGuided(
       return below.size + t * (above.size - below.size);
     }
     const ref = best();
-    const factor = ref.route.distanceMeters / closedLength(start, shape.anchors(ref.size));
+    const factor =
+      ref.route.distanceMeters / closedLength(start, shape.anchors(ref.size));
     const size = sizeForPerimeter(shape, start, targetMeters / factor);
     return ref.size < 1 ? size : Math.min(1.4 * ref.size, Math.max(0.7 * ref.size, size));
   };
@@ -451,7 +467,8 @@ export async function generateGuided(
   for (const scales of ROUND_SCALES) {
     if (attempts.length === 0) break;
     if (relativeError(best()) <= cfg.goodEnough) break;
-    if (requests >= cfg.maxRequests || Date.now() - startedAt > cfg.timeBudgetMs / 2) break;
+    if (requests >= cfg.maxRequests || Date.now() - startedAt > cfg.timeBudgetMs / 2)
+      break;
     const size = nextSize();
     const before = attempts.length;
     await evaluate(scales.map((s) => size * s));

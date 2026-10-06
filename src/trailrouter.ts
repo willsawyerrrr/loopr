@@ -50,9 +50,7 @@ function buildUrl(q: TrailRouterQuery): string {
   const params = new URLSearchParams({
     coordinates: points.map(([lon, lat]) => `${lon},${lat}`).join("|"),
     roundtrip: String(!q.through),
-    ...(q.through
-      ? {}
-      : { target_distance: String(Math.round(q.targetDistanceMeters)) }),
+    ...(q.through ? {} : { target_distance: String(Math.round(q.targetDistanceMeters)) }),
     hills_preference: String(q.hillsPreference),
     green_preference: String(q.greenPreference),
     avoid_repetition: String(DEFAULTS.avoidRepetition),

@@ -12,7 +12,17 @@ candidate closest to that distance, and converts it to a GPX 1.1 track.
 `GET`/`POST` `/api/route` returns JSON by default:
 
 ```json
-{ "gpx": "…", "filename": "…", "targetDistanceKm": 0, "route": {}, "coordinates": [], "segments": [], "checksum": {}, "warnings": [], "variant": 0 }
+{
+  "gpx": "…",
+  "filename": "…",
+  "targetDistanceKm": 0,
+  "route": {},
+  "coordinates": [],
+  "segments": [],
+  "checksum": {},
+  "warnings": [],
+  "variant": 0
+}
 ```
 
 `variant` is an optional non-negative integer (a body field on `POST`, a query

@@ -66,9 +66,8 @@ const SAMPLE_RESPONSE = {
 function mockFetch(body: unknown, init: { status?: number } = {}) {
   const { status = 200 } = init;
   const text = typeof body === "string" ? body : JSON.stringify(body);
-  return vi.fn(
-    (_url: string, _opts?: RequestInit): Promise<Response> =>
-      Promise.resolve(new Response(text, { status })),
+  return vi.fn((_url: string, _opts?: RequestInit): Promise<Response> =>
+    Promise.resolve(new Response(text, { status })),
   );
 }
 
@@ -163,10 +162,7 @@ describe("fetchRoutes — defensive parse", () => {
 });
 
 describe("pickBest", () => {
-  const route = (
-    distanceMeters: number,
-    weight: number,
-  ): TrailRouterRoute => ({
+  const route = (distanceMeters: number, weight: number): TrailRouterRoute => ({
     distanceMeters,
     coordinates: [[0, 0]],
     ascentMeters: 0,
