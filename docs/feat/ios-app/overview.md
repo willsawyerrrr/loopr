@@ -29,7 +29,7 @@ docs/brand/loopr-icon.svg  Source of the app icon (rendered to 1024 px in the as
     `unreachablePins(from:targetKm:)` flags pins beyond the distance the server
     accepts.
   - `StartPlace` / `DefaultStartStore` — a chosen start (point and optional
-    name) and the *Default start* from Settings, kept in `UserDefaults`.
+    name) and the _Default start_ from Settings, kept in `UserDefaults`.
   - `RunPlan` / `CalendarEvent` / `PlannedRun` — the pure calendar logic, with no
     EventKit import: picks all-day events in `[start of today, +8 days)`
     earliest first, builds the workout request from an event, chooses the
@@ -57,15 +57,15 @@ docs/brand/loopr-icon.svg  Source of the app icon (rendered to 1024 px in the as
     `LastStartStore` holds the last device location only: a chosen or default
     start never overwrites it, a real fix always does.
   - `RouteFormat` — the shared distance / name / subtitle strings.
-- **`Loopr`** is the UI: a *Runs* tab (upcoming Runna runs, and a *From
-  screenshot* button), a *Generate* tab
+- **`Loopr`** is the UI: a _Runs_ tab (upcoming Runna runs, and a _From
+  screenshot_ button), a _Generate_ tab
   (distance, hills, green, shape, map, save, share GPX; the route starts at the chosen or default start, else the current location) and
-  a *Saved* tab (list, detail map, swipe to delete, share GPX). The *Shape route*
-  sheet (`ShapeSheet`) is shared by the *Generate* tab and the run detail. The EventKit
+  a _Saved_ tab (list, detail map, swipe to delete, share GPX). The _Shape route_
+  sheet (`ShapeSheet`) is shared by the _Generate_ tab and the run detail. The EventKit
   adapter (`RunCalendar`), route generation for a run (`RunPreparation`) and the
   background refresh (`MorningRefresh`) live here, as do the Vision and
   Foundation Models code for screenshots (`ScreenshotOCR`, `WorkoutRewriter`). Generating again on the
-  *Generate* tab, *Regenerate* on a run and the snippet's **Regenerate** all send
+  _Generate_ tab, _Regenerate_ on a run and the snippet's **Regenerate** all send
   a fresh `variant`.
 
 ## Runs tab
@@ -78,33 +78,33 @@ once a route exists it also shows the distance and a checkmark.
   (`requestFullAccessToEvents()`) from a button on the tab. If access is denied
   the tab says so and offers a button that opens the system Settings.
 - **Calendar:** the calendar whose title contains `Runna` (case-insensitive). If
-  there is none, the tab prompts you to choose one under *Settings → Calendar*;
+  there is none, the tab prompts you to choose one under _Settings → Calendar_;
   the choice is kept and takes precedence.
 - **Tapping a run** opens its detail. With no saved route it shows the run's
-  title, date and workout notes, the *Shape route* row and a **Generate route**
+  title, date and workout notes, the _Shape route_ row and a **Generate route**
   button; nothing is generated until the button is tapped. Generating sends the
   workout text (the event's Notes) with the title, the date (`yyyy-MM-dd`), the
   start point, the shape, the hills/green preferences and the pace table. The
   start is the shape's chosen start, else the default start, else the current
   location, else the last start point used. Once a route
-  exists the map, where it started from, stats (distance, estimated time, climb), warnings (verbatim), *Share GPX*
-  and *Regenerate* are shown. A run with no Notes reports that it has no workout.
+  exists the map, where it started from, stats (distance, estimated time, climb), warnings (verbatim), _Share GPX_
+  and _Regenerate_ are shown. A run with no Notes reports that it has no workout.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
-  event identifier plus date), and appears in *Saved* too. *Regenerate* sends a
+  event identifier plus date), and appears in _Saved_ too. _Regenerate_ sends a
   fresh `variant` and updates that same saved route with a different loop.
 
 ## Shape sheet
 
-A **Shape route** row on the *Generate* tab and on a run's detail opens a sheet
+A **Shape route** row on the _Generate_ tab and on a run's detail opens a sheet
 with a map centred on the start. The row shows the current shape (`Custom start ·
 2 pins · NE`, or `Off`).
 
-- **Start:** a *Start and finish* row above the pins shows where the loop starts
-  and ends: *Current location* unless a start is chosen or a default start is
+- **Start:** a _Start and finish_ row above the pins shows where the loop starts
+  and ends: _Current location_ unless a start is chosen or a default start is
   set. Search for a place or address in the sheet's search field (suggestions
-  come from `MKLocalSearchCompleter`) and pick one, or tap *Set start* and tap
+  come from `MKLocalSearchCompleter`) and pick one, or tap _Set start_ and tap
   the map. The start marker (the runner) is draggable once chosen, and a dropped
-  start is named after what is there when that can be looked up. *Reset* returns
+  start is named after what is there when that can be looked up. _Reset_ returns
   to the default start, or the current location. The map recentres on the start.
   Choosing a start needs no location access; the device location is only asked
   for while no start is chosen and there is no default start.
@@ -112,7 +112,7 @@ with a map centred on the start. The row shows the current shape (`Custom start 
 - **Pins:** tap the map to drop up to 3 numbered pins, drag one to move it, and
   remove it from its context menu or the minus button beneath the map. The loop
   passes through the pins in a sensible order.
-- **Heading:** *Any*, `N`, `NE`, `E`, `SE`, `S`, `SW`, `W` or `NW` picks the direction
+- **Heading:** _Any_, `N`, `NE`, `E`, `SE`, `S`, `SW`, `W` or `NW` picks the direction
   the loop should head toward. With pins, it chooses which side the loop bulges
   and the visiting order.
 - **Clear** removes the pins and the heading; **Done** keeps them.
@@ -120,11 +120,11 @@ with a map centred on the start. The row shows the current shape (`Custom start 
   screen, including regenerations; its start is sent as the request's `start`.
   The result map numbers the pins and marks the start.
 - On a run, the shape defaults to the one the saved route was generated with and
-  is saved with the route, so *Regenerate* keeps it. A run with no route
+  is saved with the route, so _Regenerate_ keeps it. A run with no route
   can be shaped before it is first generated. Morning refresh reuses the saved
   shape, or none.
 - Siri and Shortcuts requests are not shaped and use the default start, if any.
-- The *From screenshot* screen has no shape either: it uses the default start.
+- The _From screenshot_ screen has no shape either: it uses the default start.
 
 Limits:
 
@@ -139,27 +139,27 @@ Limits:
 
 ## Settings
 
-A gear on the *Runs* tab opens:
+A gear on the _Runs_ tab opens:
 
 - **Calendar** — pick which calendar holds the runs (default: automatic).
 - **Default start** — an optional place (search, or tap the map) that routes
-  start and finish at when they have no start of their own; *Clear* removes it.
+  start and finish at when they have no start of their own; _Clear_ removes it.
   It is stored as a name and coordinate. When set it is the start for the
   morning refresh, Siri and Shortcuts, the screenshot flow and any generation
   without a per-route start; a shape's own start overrides it. When unset,
   routes start from the current location as usual.
 - **Route preferences** — the hills and green sliders, the same values the
-  *Generate* tab and Siri use.
+  _Generate_ tab and Siri use.
 - **Paces** — an editable table of Runna pace phrase to min/km, seeded with the
   server defaults and sent as `paces` with each workout. When the server warns
-  that a pace isn't configured, add the phrase here and regenerate. *Run pace*
+  that a pace isn't configured, add the phrase here and regenerate. _Run pace_
   (default 7.5 min/km) is sent as `runPace` with every request: it paces run
   segments without a configured phrase and estimates a plain-distance run's time.
 - **Prepare routes each morning** — off by default; see below.
 
 ## Morning refresh
 
-With *Prepare routes each morning* on, the app schedules a background app
+With _Prepare routes each morning_ on, the app schedules a background app
 refresh (`BGAppRefreshTask`, `dev.willsawyerrrr.loopr.refresh`) for the next
 06:00 local. When it runs, it generates the route for today's run (or the next
 one) if it doesn't have one, saves it, and posts a notification "Route ready:
@@ -171,7 +171,7 @@ launching), and each run reschedules the next.
 iOS decides when background refreshes happen and may run them late or not at
 all, notably if the app is rarely opened or Low Power Mode is on. It starts at
 the default start when one is set. Otherwise, without a location fix in the
-background it uses the last device location, so open the app where you run from. A run's *Generate route* button always generates a missing route.
+background it uses the last device location, so open the app where you run from. A run's _Generate route_ button always generates a missing route.
 
 ## Siri and Shortcuts
 
@@ -179,38 +179,38 @@ The intents live in the app target (`Loopr/Intents/`) and run in the app's
 own process, so they share the SwiftData store with the UI. No entitlements
 beyond the location usage string are needed.
 
-| Intent | What it does |
-|---|---|
-| `CreateRouteOfDistanceIntent` | Backs the phrases that say the distance aloud. Takes a whole-kilometre `DistanceEntity` (1–50 km) and otherwise behaves like `CreateRouteIntent`. |
-| `CreateRouteIntent` | Takes a distance, generates a loop from the default start (or the current location, or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
-| `CreateRouteFromScreenshotIntent` | Takes a screenshot of a Runna workout, reads its distance and returns the same map snippet. Not a Siri phrase; see *Route from a screenshot*. |
-| `OpenRouteIntent` | Opens a saved route in the app. |
+| Intent                            | What it does                                                                                                                                                                                              |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CreateRouteOfDistanceIntent`     | Backs the phrases that say the distance aloud. Takes a whole-kilometre `DistanceEntity` (1–50 km) and otherwise behaves like `CreateRouteIntent`.                                                         |
+| `CreateRouteIntent`               | Takes a distance, generates a loop from the default start (or the current location, or the last start point), and returns a map snippet with **Save** and **Regenerate** buttons. Runs in the background. |
+| `CreateRouteFromScreenshotIntent` | Takes a screenshot of a Runna workout, reads its distance and returns the same map snippet. Not a Siri phrase; see _Route from a screenshot_.                                                             |
+| `OpenRouteIntent`                 | Opens a saved route in the app.                                                                                                                                                                           |
 
-Say the distance in the phrase — *"Create a 10 km route in Loopr"*,
-*"Make me a 10 km route with Loopr"* or *"Plan a 10 km run in
-Loopr"* (1–50 whole kilometres; "a" or "an", so *"Create an 8 km route…"*
+Say the distance in the phrase — _"Create a 10 km route in Loopr"_,
+_"Make me a 10 km route with Loopr"_ or _"Plan a 10 km run in
+Loopr"_ (1–50 whole kilometres; "a" or "an", so _"Create an 8 km route…"_
 works too). Siri phrases can only embed an `AppEntity` /
 `AppEnum`, not a `Measurement`, so the spoken distance is a `DistanceEntity`.
-Leave the distance out — *"Create a route in Loopr"*, *"Make me a route
-with Loopr"*, *"Generate a run route with Loopr"* or *"Plan a run
-in Loopr"* — and Siri asks *"How far do you want to run?"*, accepting any
+Leave the distance out — _"Create a route in Loopr"_, _"Make me a route
+with Loopr"_, _"Generate a run route with Loopr"_ or _"Plan a run
+in Loopr"_ — and Siri asks _"How far do you want to run?"_, accepting any
 length in km or miles (also the parameter when the action is used in a
-Shortcut). *"Open `<route>` in Loopr"* opens a saved route.
+Shortcut). _"Open `<route>` in Loopr"_ opens a saved route.
 
 - **Snippet:** the map is a `MKMapSnapshotter` image with the route drawn on it
   (a live `Map` renders blank in a snippet). **Save** stores the route without
   opening the app; **Regenerate** produces a different loop for the same distance (a fresh `variant` each tap).
   Generated routes are held in memory until saved, so a route that has sat
   unsaved after the app process exits must be re-requested.
-- **Start point:** the default start from *Settings* when set, otherwise the
+- **Start point:** the default start from _Settings_ when set, otherwise the
   current location when a fix arrives in time, otherwise the last device
   location (recorded whenever the app or an intent gets a fix). With none of
   these, the intent asks you to open the app once and allow location, or set a
   default start. The spoken line names the start ("… route from Home.") unless
   it was the current location, and the snippet does the same; **Regenerate**
   keeps the start.
-- **Preferences:** hills and green use the values set on the *Generate* tab
-  (or in *Settings*).
+- **Preferences:** hills and green use the values set on the _Generate_ tab
+  (or in _Settings_).
 - **Time budget:** the API call times out after 25 s to stay inside the
   ~30 s background limit.
 - **Saved routes** are `AppEntity` / `IndexedEntity` values, indexed in
@@ -227,20 +227,20 @@ calendar run does: the recognised text is sent to `POST /api/route` as
 Siri's on-screen awareness only exposes an app's own content, so Siri can't read
 Runna. "The current Runna screen" therefore means a screenshot:
 
-- **In the app:** on the *Runs* tab, *From screenshot* opens a sheet with a
+- **In the app:** on the _Runs_ tab, _From screenshot_ opens a sheet with a
   `PhotosPicker` limited to screenshots (newest first, no Photos permission
   needed) and a paste button for an image on the clipboard. The sheet shows the
-  recognised text in an editor; correct it and *Make route from this text* to
+  recognised text in an editor; correct it and _Make route from this text_ to
   regenerate. The result is the same as everywhere else: map, stats, warnings,
-  *Save route* and *Share GPX*.
+  _Save route_ and _Share GPX_.
 - **From Shortcuts, Back Tap or the Action Button:** `CreateRouteFromScreenshotIntent`
   takes an image (`IntentFile`) and runs in the background. Build a one-action
-  shortcut, *Take Screenshot* followed by *Create Route from Screenshot*, then
-  bind it under *Settings → Accessibility → Touch → Back Tap*, or to the Action
+  shortcut, _Take Screenshot_ followed by _Create Route from Screenshot_, then
+  bind it under _Settings → Accessibility → Touch → Back Tap_, or to the Action
   Button. With Runna's workout screen showing, a double tap makes the route and
   shows the usual map snippet with **Save** and **Regenerate**. It is not an App
   Shortcut phrase: Siri can't supply the image, so it appears only in the
-  Shortcuts app. Its optional *Distance* parameter is used instead of the
+  Shortcuts app. Its optional _Distance_ parameter is used instead of the
   workout when given, and is what the shortcut asks for when the workout can't
   be confirmed.
 - There is no Share Extension. Sharing a screenshot into Loopr would need an
@@ -282,7 +282,7 @@ Foundation Models rewrites the recognised lines into structured steps
 or the model is unavailable, or there isn't time left in an intent's budget, the
 problems are shown verbatim, the recognised text stays editable, and a manual
 distance (prefilled with the best guess) generates a loop from the existing
-manual request. In the intent this is the *Distance* parameter's prompt. A route
+manual request. In the intent this is the _Distance_ parameter's prompt. A route
 with a wrong distance is never returned silently.
 
 A workout with no stated running distance (a time-based walk/run) has nothing to
@@ -344,7 +344,7 @@ TestFlight (build number = run number); `ITSAppUsesNonExemptEncryption` is `fals
 repository variable, and a Loopr app record in App Store Connect
 (`dev.willsawyerrrr.loopr`).
 
-In the simulator, set a location first (*Features → Location*, or
+In the simulator, set a location first (_Features → Location_, or
 `xcrun simctl location booted set <lat>,<lon>`).
 
 ## Tests

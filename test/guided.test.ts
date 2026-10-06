@@ -198,7 +198,8 @@ describe("planning", () => {
 });
 
 describe("generateGuided", () => {
-  const within = (distance: number, target: number) => Math.abs(distance - target) / target;
+  const within = (distance: number, target: number) =>
+    Math.abs(distance - target) / target;
 
   it("heading only converges within tolerance and the request cap", async () => {
     for (const factor of [1.1, 1.25, 1.6]) {
@@ -235,7 +236,8 @@ describe("generateGuided", () => {
     const r = await generateGuided(input(9000, pins, null), impl);
     expect(within(r.route.distanceMeters, 9000)).toBeLessThanOrEqual(0.07);
     expect(r.requests).toBeLessThanOrEqual(8);
-    for (const pin of pins) expect(closestApproach(r.route.coordinates, pin)).toBeLessThan(1);
+    for (const pin of pins)
+      expect(closestApproach(r.route.coordinates, pin)).toBeLessThan(1);
   });
 
   it("pins and a heading converge, with pins still on the route", async () => {
@@ -243,7 +245,8 @@ describe("generateGuided", () => {
     const { impl } = fakeRouter();
     const r = await generateGuided(input(7000, pins, 45), impl);
     expect(within(r.route.distanceMeters, 7000)).toBeLessThanOrEqual(0.07);
-    for (const pin of pins) expect(closestApproach(r.route.coordinates, pin)).toBeLessThan(1);
+    for (const pin of pins)
+      expect(closestApproach(r.route.coordinates, pin)).toBeLessThan(1);
   });
 
   it("stops after one request when the pins already fit", async () => {
@@ -260,26 +263,29 @@ describe("generateGuided", () => {
     const r = await generateGuided(input(6000, pins, null), impl);
     expect(r.route.distanceMeters).toBeGreaterThan(6000 * 1.07);
     expect(r.warnings).toHaveLength(1);
-    expect(r.warnings[0]).toMatch(/Your pins make this route \d+\.\d km against a 6\.0 km target/);
+    expect(r.warnings[0]).toMatch(
+      /Your pins make this route \d+\.\d km against a 6\.0 km target/,
+    );
     expect(r.requests).toBeLessThanOrEqual(8);
   });
 
   it("warns when the router's route misses a pin", async () => {
     const pin = destination(START, 45, 1000);
-    const impl = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          routes: [
-            {
-              distance: 5000,
-              geometry: { coordinates: [START, destination(START, 200, 1500), START] },
-              ascent: 0,
-              descent: 0,
-              weight: 1,
-            },
-          ],
-        }),
-      ),
+    const impl = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            routes: [
+              {
+                distance: 5000,
+                geometry: { coordinates: [START, destination(START, 200, 1500), START] },
+                ascent: 0,
+                descent: 0,
+                weight: 1,
+              },
+            ],
+          }),
+        ),
     ) as unknown as typeof fetch;
     const r = await generateGuided(input(5000, [pin], null), impl);
     expect(r.warnings.join()).toMatch(/passes more than 100 m from 1 of your pins/);
@@ -296,8 +302,12 @@ describe("generateGuided", () => {
     const r = await generateGuided(input(5000, [], 90), flaky);
     expect(r.route.distanceMeters).toBeGreaterThan(0);
 
-    const dead = vi.fn(async () => new Response("no", { status: 500 })) as unknown as typeof fetch;
-    await expect(generateGuided(input(5000, [], 90), dead)).rejects.toThrow(/Trail Router/);
+    const dead = vi.fn(
+      async () => new Response("no", { status: 500 }),
+    ) as unknown as typeof fetch;
+    await expect(generateGuided(input(5000, [], 90), dead)).rejects.toThrow(
+      /Trail Router/,
+    );
   });
 
   it("never exceeds the request cap even when the router is erratic", async () => {
