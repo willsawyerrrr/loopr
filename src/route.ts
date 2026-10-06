@@ -1,6 +1,11 @@
 import { DEFAULTS, type RouteConfig } from "./config.js";
 import { fetchRoutes, type TrailRouterRoute } from "./trailrouter.js";
-import { generateGuided, GuidanceError, validateGuidance, type LonLat } from "./guided.js";
+import {
+  generateGuided,
+  GuidanceError,
+  validateGuidance,
+  type LonLat,
+} from "./guided.js";
 import { chooseCandidate, nudgeStart } from "./variation.js";
 import { lineStringToGpx } from "./gpx.js";
 import { parseWorkout, type ParsedWorkout, type Segment } from "./workout.js";
@@ -109,12 +114,11 @@ export async function generateRoute(
   const { workout, targetDistanceKm, title, date, config, variant = 0 } = input;
   const { waypoints, heading } = input;
   const hasWorkout = typeof workout === "string" && workout.trim().length > 0;
-  const hasManual = typeof targetDistanceKm === "number" && Number.isFinite(targetDistanceKm);
+  const hasManual =
+    typeof targetDistanceKm === "number" && Number.isFinite(targetDistanceKm);
 
   if (hasWorkout === hasManual) {
-    throw new RouteInputError(
-      "Provide exactly one of `workout` or `targetDistanceKm`",
-    );
+    throw new RouteInputError("Provide exactly one of `workout` or `targetDistanceKm`");
   }
 
   const runPace = config.runPaceMinPerKm ?? DEFAULTS.fallbackRunPaceMinPerKm;
@@ -149,7 +153,10 @@ export async function generateRoute(
   let best: TrailRouterRoute;
   let guided: RouteResult["guided"];
 
-  if ((waypoints && waypoints.length > 0) || (heading !== undefined && heading !== null)) {
+  if (
+    (waypoints && waypoints.length > 0) ||
+    (heading !== undefined && heading !== null)
+  ) {
     let guidance;
     try {
       guidance = validateGuidance(config.start, targetMeters, waypoints, heading);
@@ -204,9 +211,7 @@ export async function generateRoute(
       : `route-${km}km.gpx`;
 
   const gainPerKm =
-    best.distanceMeters > 0
-      ? best.ascentMeters / (best.distanceMeters / 1000)
-      : 0;
+    best.distanceMeters > 0 ? best.ascentMeters / (best.distanceMeters / 1000) : 0;
 
   const estimatedMinutes = hasWorkout
     ? checksum.computedMinutes

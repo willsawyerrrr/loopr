@@ -46,9 +46,8 @@ const ROUTER_BODY = {
 function stubRouter(body: unknown, init: { status?: number } = {}) {
   const { status = 200 } = init;
   const text = typeof body === "string" ? body : JSON.stringify(body);
-  const impl = vi.fn(
-    (_url: string, _opts?: RequestInit): Promise<Response> =>
-      Promise.resolve(new Response(text, { status })),
+  const impl = vi.fn((_url: string, _opts?: RequestInit): Promise<Response> =>
+    Promise.resolve(new Response(text, { status })),
   );
   vi.stubGlobal("fetch", impl);
   return impl;
@@ -84,12 +83,19 @@ describe("POST /api/route — workout happy path", () => {
   it("returns gpx, filename, checksum and route metadata", async () => {
     const impl = stubRouter(ROUTER_BODY);
     const res = await POST(
-      postRequest({ workout: SAMPLE_A, title: "Walk Run", date: "2026-09-13", start: START }),
+      postRequest({
+        workout: SAMPLE_A,
+        title: "Walk Run",
+        date: "2026-09-13",
+        start: START,
+      }),
     );
     expect(res.status).toBe(200);
     const json = await readJson(res);
 
-    expect(json.gpx).toContain('<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>');
+    expect(json.gpx).toContain(
+      '<trkpt lat="51.5074" lon="-0.1278"><ele>12.5</ele></trkpt>',
+    );
     expect(json.filename).toBe("2026-09-13-walk-run-3.2km.gpx");
     expect(json.checksum.ok).toBe(true);
     // the 3180 m candidate, not the 5000 m one
@@ -129,7 +135,10 @@ describe("POST /api/route — manual override path", () => {
 describe("POST /api/route — error branches", () => {
   it("400 on malformed JSON", async () => {
     stubRouter(ROUTER_BODY);
-    const req = new Request("https://x/api/route", { method: "POST", body: "{ not json" });
+    const req = new Request("https://x/api/route", {
+      method: "POST",
+      body: "{ not json",
+    });
     expect((await POST(req)).status).toBe(400);
   });
 
@@ -147,7 +156,9 @@ describe("POST /api/route — error branches", () => {
 
   it("422 when the workout yields no target distance", async () => {
     stubRouter(ROUTER_BODY);
-    const res = await POST(postRequest({ workout: "Rest day\n\nNothing today", start: START }));
+    const res = await POST(
+      postRequest({ workout: "Rest day\n\nNothing today", start: START }),
+    );
     expect(res.status).toBe(422);
     expect((await readJson(res)).error).toMatch(/target distance/i);
   });
@@ -188,25 +199,29 @@ describe("GET /api/route — manual test endpoint", () => {
 
 describe("generateRoute — overriddenParameters surfaced", () => {
   it("adds a warning and route.overriddenParameters", async () => {
-    const impl = vi.fn(
-      (_url: string, _opts?: RequestInit): Promise<Response> =>
-        Promise.resolve(
-          new Response(
-            JSON.stringify({
-              routes: [
-                {
-                  distance: 3000,
-                  geometry: { coordinates: [[-0.1278, 51.5074], [-0.13, 51.5]] },
-                  ascent: 15,
-                  descent: 15,
-                  weight: 2800,
-                  greenScore: 0.2,
-                  overriddenParameters: { target_distance: 2500 },
+    const impl = vi.fn((_url: string, _opts?: RequestInit): Promise<Response> =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            routes: [
+              {
+                distance: 3000,
+                geometry: {
+                  coordinates: [
+                    [-0.1278, 51.5074],
+                    [-0.13, 51.5],
+                  ],
                 },
-              ],
-            }),
-          ),
+                ascent: 15,
+                descent: 15,
+                weight: 2800,
+                greenScore: 0.2,
+                overriddenParameters: { target_distance: 2500 },
+              },
+            ],
+          }),
         ),
+      ),
     );
     const result = await generateRoute(
       { targetDistanceKm: 3, config: { start: START, paces: DEFAULT_PACES } },
@@ -279,17 +294,16 @@ describe("POST /api/route — output formats", () => {
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("application/gpx+xml");
-    expect(res.headers.get("Content-Disposition")).toContain('filename="route-3.2km.gpx"');
+    expect(res.headers.get("Content-Disposition")).toContain(
+      'filename="route-3.2km.gpx"',
+    );
     expect(await res.text()).toMatch(/^<\?xml/);
   });
 
   it("format=html returns a Leaflet map page with the route and summary", async () => {
     stubRouter(ROUTER_BODY);
     const res = await POST(
-      postRequest(
-        { workout: SAMPLE_A, title: "Walk Run", start: START },
-        "?format=html",
-      ),
+      postRequest({ workout: SAMPLE_A, title: "Walk Run", start: START }, "?format=html"),
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("text/html; charset=utf-8");
@@ -331,7 +345,13 @@ describe("POST /api/route — output formats", () => {
 describe("POST /api/route — variant", () => {
   const candidate = (distance: number, lon: number) => ({
     distance,
-    geometry: { coordinates: [[lon, 51.5], [lon + 0.01, 51.51], [lon, 51.5]] },
+    geometry: {
+      coordinates: [
+        [lon, 51.5],
+        [lon + 0.01, 51.51],
+        [lon, 51.5],
+      ],
+    },
     ascent: 10,
     descent: 10,
     weight: 1,
@@ -351,7 +371,9 @@ describe("POST /api/route — variant", () => {
 
   it("echoes variant 0 and leaves the start alone when absent", async () => {
     const impl = stubRouter(VARIANT_BODY);
-    const json = await readJson(await POST(postRequest({ targetDistanceKm: 5, start: START })));
+    const json = await readJson(
+      await POST(postRequest({ targetDistanceKm: 5, start: START })),
+    );
     expect(json.variant).toBe(0);
     expect(json.route.distanceKm).toBe(5.02);
     expect(sentStart(impl)).toBe(`${START[0]},${START[1]}`);
@@ -384,8 +406,12 @@ describe("POST /api/route — variant", () => {
 
   it("the same variant is repeatable", async () => {
     stubRouter(VARIANT_BODY);
-    const a = await readJson(await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 4 })));
-    const b = await readJson(await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 4 })));
+    const a = await readJson(
+      await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 4 })),
+    );
+    const b = await readJson(
+      await POST(postRequest({ targetDistanceKm: 5, start: START, variant: 4 })),
+    );
     expect(a.route).toEqual(b.route);
     expect(a.coordinates).toEqual(b.coordinates);
   });
@@ -407,7 +433,9 @@ describe("POST /api/route — variant", () => {
     }
     for (const q of ["-1", "1.5", "abc"]) {
       const res = await GET(
-        new Request(`https://x/api/route?distanceKm=5&start=-0.1278,51.5074&variant=${q}`),
+        new Request(
+          `https://x/api/route?distanceKm=5&start=-0.1278,51.5074&variant=${q}`,
+        ),
       );
       expect(res.status).toBe(400);
     }
@@ -425,7 +453,10 @@ describe("POST /api/route — waypoints and heading", () => {
         .map((pair) => pair.split(",").map(Number) as [number, number]);
       let metres = 0;
       for (let i = 1; i < points.length; i++) {
-        const dx = (points[i]![0] - points[i - 1]![0]) * 111_320 * Math.cos((START[1] * Math.PI) / 180);
+        const dx =
+          (points[i]![0] - points[i - 1]![0]) *
+          111_320 *
+          Math.cos((START[1] * Math.PI) / 180);
         const dy = (points[i]![1] - points[i - 1]![1]) * 111_320;
         metres += Math.hypot(dx, dy);
       }
@@ -459,7 +490,9 @@ describe("POST /api/route — waypoints and heading", () => {
     expect(params.get("roundtrip")).toBe("true");
     expect(params.get("target_distance")).toBe("5000");
     expect(json.guided).toBeUndefined();
-    expect((await readJson(await post({ waypoints: [], heading: undefined }))).guided).toBeUndefined();
+    expect(
+      (await readJson(await post({ waypoints: [], heading: undefined }))).guided,
+    ).toBeUndefined();
   });
 
   it("routes through a pin and reports `guided`", async () => {
@@ -489,7 +522,13 @@ describe("POST /api/route — waypoints and heading", () => {
   it("combines pins, heading, preferences and variant", async () => {
     const impl = fakeGuidedRouter();
     const json = await readJson(
-      await post({ waypoints: [PIN], heading: 300, hillsPreference: 0.5, greenPreference: 0.3, variant: 4 }),
+      await post({
+        waypoints: [PIN],
+        heading: 300,
+        hillsPreference: 0.5,
+        greenPreference: 0.3,
+        variant: 4,
+      }),
     );
     expect(json.variant).toBe(4);
     expect(json.guided.heading).toBe(300);
@@ -510,8 +549,12 @@ describe("POST /api/route — waypoints and heading", () => {
   it("warns when pins force a length off target", async () => {
     fakeGuidedRouter();
     const far: [number, number] = [START[0] + 0.028, START[1]];
-    const json = await readJson(await post({ waypoints: [far, [START[0], START[1] + 0.028]], targetDistanceKm: 5 }));
-    expect(json.warnings.join()).toMatch(/Your pins make this route .* km against a 5\.0 km target/);
+    const json = await readJson(
+      await post({ waypoints: [far, [START[0], START[1] + 0.028]], targetDistanceKm: 5 }),
+    );
+    expect(json.warnings.join()).toMatch(
+      /Your pins make this route .* km against a 5\.0 km target/,
+    );
   });
 
   it("GET accepts `waypoints=lon,lat;lon,lat` and `heading`", async () => {
@@ -547,7 +590,9 @@ describe("POST /api/route — waypoints and heading", () => {
       expect((await readJson(res)).error).toMatch(/waypoint|heading/i);
     }
     for (const q of ["waypoints=1", "waypoints=a,b", "heading=x", "heading=400"]) {
-      const res = await GET(new Request(`https://x/api/route?distanceKm=5&start=${START.join(",")}&${q}`));
+      const res = await GET(
+        new Request(`https://x/api/route?distanceKm=5&start=${START.join(",")}&${q}`),
+      );
       expect(res.status, q).toBe(400);
     }
   });

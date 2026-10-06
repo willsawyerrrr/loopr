@@ -20,10 +20,7 @@ const NUDGE_SALT = 0x51ed270b;
 const CHOICE_SALT = 0x9e3779b9;
 
 /** `start` moved by a seeded offset (random bearing, radius within `DEFAULTS.variantNudgeMeters`), as `[lon, lat]`. */
-export function nudgeStart(
-  start: [number, number],
-  variant: number,
-): [number, number] {
+export function nudgeStart(start: [number, number], variant: number): [number, number] {
   const rand = mulberry32(variant ^ NUDGE_SALT);
   const { min, max } = DEFAULTS.variantNudgeMeters;
   const bearing = rand() * 2 * Math.PI;
