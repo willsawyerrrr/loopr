@@ -171,10 +171,7 @@ export async function POST(request: Request): Promise<Response> {
   const hasWorkout = typeof body["workout"] === "string" && body["workout"].trim() !== "";
   const hasManual = typeof body["targetDistanceKm"] === "number";
   if (!hasWorkout && !hasManual) {
-    return json(
-      { error: "Provide either `workout` or `targetDistanceKm`" },
-      400,
-    );
+    return json({ error: "Provide either `workout` or `targetDistanceKm`" }, 400);
   }
 
   return run(

@@ -86,9 +86,7 @@ function classify(
   warnings: string[],
 ): Classification {
   const spec = part.match(PACE_SPEC);
-  const specPace = spec
-    ? parseInt(spec[1]!, 10) + parseInt(spec[2]!, 10) / 60
-    : null;
+  const specPace = spec ? parseInt(spec[1]!, 10) + parseInt(spec[2]!, 10) / 60 : null;
 
   if (/\bwalk|\brest\b/.test(part)) {
     const configured = paces["walking"];
@@ -161,9 +159,7 @@ function parsePart(
   const c = classify(part, paces, fallbackRunPaceMinPerKm, warnings);
 
   if (km || metres) {
-    const meters = km
-      ? Math.round(parseFloat(km[1]!) * 1000)
-      : parseInt(metres![1]!, 10);
+    const meters = km ? Math.round(parseFloat(km[1]!) * 1000) : parseInt(metres![1]!, 10);
     return {
       segment: {
         activity: c.activity,
@@ -178,9 +174,7 @@ function parsePart(
     };
   }
 
-  const secs = minutes
-    ? parseInt(minutes[1]!, 10) * 60
-    : parseInt(seconds![1]!, 10);
+  const secs = minutes ? parseInt(minutes[1]!, 10) * 60 : parseInt(seconds![1]!, 10);
   return {
     segment: {
       activity: c.activity,
@@ -212,8 +206,7 @@ export function parseWorkout(
   // The first line is a title, not a segment, when it uses the `Type • … • …`
   // format, or names a workout type without reading like a segment.
   const isTitle =
-    /\s•\s/.test(header) ||
-    (TITLE_NAME.test(header) && !SEGMENT_MARKERS.test(header));
+    /\s•\s/.test(header) || (TITLE_NAME.test(header) && !SEGMENT_MARKERS.test(header));
   const headerLine = isTitle ? header : undefined;
 
   const minMatch = header.match(/•\s*(\d+)\s*(?:-\s*(\d+)\s*)?m\b/);
@@ -277,10 +270,7 @@ export function parseWorkout(
     warnings.push("No segments parsed from workout text");
   }
 
-  const targetDistanceMeters = segments.reduce(
-    (sum, s) => sum + s.distanceMeters,
-    0,
-  );
+  const targetDistanceMeters = segments.reduce((sum, s) => sum + s.distanceMeters, 0);
   const computedKm = targetDistanceMeters / 1000;
 
   // The minutes check only bites when every pace was configured or stated —
@@ -291,8 +281,7 @@ export function parseWorkout(
     anyAssumedPace ||
     Math.abs(statedMinutes - computedMinutes) <= 3;
   const kmOk =
-    statedKm === null ||
-    Math.abs(statedKm - computedKm) <= Math.max(1, 0.15 * statedKm);
+    statedKm === null || Math.abs(statedKm - computedKm) <= Math.max(1, 0.15 * statedKm);
 
   return {
     segments,

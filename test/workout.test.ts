@@ -181,10 +181,7 @@ describe("parseWorkout — 5km time trial (distance phase)", () => {
 });
 
 describe("parseWorkout — distance segment with an unknown pace", () => {
-  const parsed = parseWorkout(
-    `5km Time Trial\n\n5km time trial`,
-    DEFAULT_PACES,
-  );
+  const parsed = parseWorkout(`5km Time Trial\n\n5km time trial`, DEFAULT_PACES);
 
   it("still counts the distance, and warns about the pace", () => {
     expect(parsed.targetDistanceMeters).toBe(5000);
