@@ -166,7 +166,8 @@ struct RunDetailView: View {
                         ascentM: route.ascentM,
                         descentM: route.descentM,
                         hilliness: route.hilliness,
-                        elevationGainPerKm: route.elevationGainPerKm
+                        elevationGainPerKm: route.elevationGainPerKm,
+                        estimatedMinutes: route.estimatedMinutes
                     )
                     if let startLabel = route.startLabel { StartedFromLabel(label: startLabel) }
                     ForEach(route.warnings, id: \.self) { warning in

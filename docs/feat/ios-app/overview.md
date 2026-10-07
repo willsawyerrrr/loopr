@@ -43,7 +43,7 @@ docs/brand/loopr-icon.svg  Source of the app icon (rendered to 1024 px in the as
     points out of `gpx`.
   - `OCRLayout` / `WorkoutText` / `WorkoutOutline` / `ScreenshotRoutePipeline` —
     the screenshot logic (see below), pure and free of Vision.
-  - `SavedRoute` — the SwiftData model (metadata, coordinates, server warnings,
+  - `SavedRoute` — the SwiftData model (metadata, estimated minutes, coordinates, server warnings,
     the shape used, where it started from and, for calendar runs, the event key); `SavedRoute.makeContainer()` opens
     the on-device store.
   - `GPXWriter` / `GPXParser` / `GPXFile` — GPX 1.1 output matching the server
@@ -87,7 +87,7 @@ once a route exists it also shows the distance and a checkmark.
   start point, the shape, the hills/green preferences and the pace table. The
   start is the shape's chosen start, else the default start, else the current
   location, else the last start point used. Once a route
-  exists the map, where it started from, stats (distance, estimated time, climb), warnings (verbatim), _Share GPX_
+  exists the map, where it started from, stats (distance, estimated time, climb — kept with the saved route), warnings (verbatim), _Share GPX_
   and _Regenerate_ are shown. A run with no Notes reports that it has no workout.
 - **Saving:** a generated route is saved automatically, once per event (keyed by
   event identifier plus date), and appears in _Saved_ too. _Regenerate_ sends a

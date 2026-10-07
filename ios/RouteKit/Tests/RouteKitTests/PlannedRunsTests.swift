@@ -138,7 +138,8 @@ private func event(
 @Suite @MainActor struct EventRouteTests {
     @Test func storesEventKeyAndWarningsAndUpdatesInPlace() throws {
         let container = try SavedRoute.makeContainer(inMemory: true)
-        let summary = RouteSummary(distanceKm: 3, ascentM: 10, descentM: 9, elevationGainPerKm: 3.3, hilliness: "flat", greenScore: 0)
+        let summary = RouteSummary(distanceKm: 3, ascentM: 10, descentM: 9, elevationGainPerKm: 3.3, hilliness: "flat", greenScore: 0,
+            estimatedMinutes: 22)
         let route = SavedRoute(
             name: "Easy Run", targetDistanceKm: 3, summary: summary, previewUrl: nil,
             points: [RoutePoint(longitude: 1, latitude: 2)], warnings: ["careful"], eventKey: "a|2026-09-22")
@@ -150,13 +151,16 @@ private func event(
             FetchDescriptor<SavedRoute>(predicate: #Predicate { $0.eventKey == key }))
         #expect(found.count == 1)
         #expect(found[0].warnings == ["careful"])
+        #expect(found[0].estimatedMinutes == 22)
 
-        let updated = RouteSummary(distanceKm: 5, ascentM: 1, descentM: 1, elevationGainPerKm: 0.2, hilliness: "flat", greenScore: 0)
+        let updated = RouteSummary(distanceKm: 5, ascentM: 1, descentM: 1, elevationGainPerKm: 0.2, hilliness: "flat", greenScore: 0,
+            estimatedMinutes: 38)
         found[0].update(
             targetDistanceKm: 5, summary: updated, previewUrl: nil, points: [RoutePoint(longitude: 3, latitude: 4)], warnings: [])
         #expect(found[0].id == route.id)
         #expect(found[0].name == "Easy Run")
         #expect(found[0].distanceKm == 5)
+        #expect(found[0].estimatedMinutes == 38)
         #expect(found[0].points == [RoutePoint(longitude: 3, latitude: 4)])
         #expect(found[0].warnings.isEmpty)
     }
