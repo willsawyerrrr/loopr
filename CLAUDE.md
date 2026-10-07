@@ -21,6 +21,9 @@ closest to the target distance; a native SwiftUI iOS 26 app drives it.
 - `npm test`, `npm run typecheck` — API checks (Node 22).
 - `cd ios/RouteKit && swift test` — RouteKit tests.
 - `cd ios && xcodegen generate` — regenerate the uncommitted `.xcodeproj`.
+- CI (`.github/workflows/ci.yml`) runs `check`, `routekit` and `pre-commit`;
+  the aggregate `CI Status` job is the only check `main` requires. Add new
+  CI jobs to its `needs`.
 
 ## Conventions
 
