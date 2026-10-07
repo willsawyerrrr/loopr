@@ -53,7 +53,8 @@ struct RouteDetailView: View {
                 ascentM: route.ascentM,
                 descentM: route.descentM,
                 hilliness: route.hilliness,
-                elevationGainPerKm: route.elevationGainPerKm
+                elevationGainPerKm: route.elevationGainPerKm,
+                estimatedMinutes: route.estimatedMinutes
             )
             .padding()
             if let startLabel = route.startLabel {

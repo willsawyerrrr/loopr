@@ -15,6 +15,8 @@ public final class SavedRoute {
     public var elevationGainPerKm: Double
     public var hilliness: String
     public var greenScore: Double
+    /// Estimated time to cover the route, in minutes; `nil` for routes saved without one.
+    public var estimatedMinutes: Int?
     public var previewUrl: String?
     /// The `PlannedRun.key` this route was generated for, when it came from a calendar run.
     public var eventKey: String?
@@ -46,6 +48,7 @@ public final class SavedRoute {
         self.elevationGainPerKm = summary.elevationGainPerKm
         self.hilliness = summary.hilliness
         self.greenScore = summary.greenScore
+        self.estimatedMinutes = summary.estimatedMinutes
         self.previewUrl = previewUrl
         self.eventKey = eventKey
         self.pointsData = (try? JSONEncoder().encode(points)) ?? Data()
@@ -66,6 +69,7 @@ public final class SavedRoute {
         elevationGainPerKm = summary.elevationGainPerKm
         hilliness = summary.hilliness
         greenScore = summary.greenScore
+        estimatedMinutes = summary.estimatedMinutes
         self.previewUrl = previewUrl
         pointsData = (try? JSONEncoder().encode(points)) ?? Data()
         warningsData = try? JSONEncoder().encode(warnings)
