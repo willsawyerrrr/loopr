@@ -81,7 +81,8 @@ once a route exists it also shows the distance and a checkmark.
   there is none, the tab prompts you to choose one under _Settings → Calendar_;
   the choice is kept and takes precedence.
 - **Tapping a run** opens its detail. With no saved route it shows the run's
-  title, date and workout notes, the _Shape route_ row and a **Generate route**
+  title, date and workout notes, the _Hills_ and _Green_ sliders (the same values as
+  the _Generate_ tab and Settings), the _Shape route_ row and a **Generate route**
   button; nothing is generated until the button is tapped. Generating sends the
   workout text (the event's Notes) with the title, the date (`yyyy-MM-dd`), the
   start point, the shape, the hills/green preferences and the pace table. The

@@ -188,6 +188,7 @@ struct RunDetailView: View {
                 Section { Label(errorMessage, systemImage: "exclamationmark.triangle").foregroundStyle(.red) }
             }
             Section {
+                PreferenceSliders()
                 ShapeRow(shape: shape) { showShape = true }
                 if route == nil {
                     Button { generate(regenerate: false) } label: {
