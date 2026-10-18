@@ -18,9 +18,10 @@ closest to the target distance; a native SwiftUI iOS 26 app drives it.
 
 ## Commands
 
-- `npm test`, `npm run typecheck` — API checks (Node 26, see `.nvmrc`).
-  `engines` is `>=24` because Vercel runs the function on its newest
-  supported Node (24).
+- `npm test`, `npm run typecheck` — API checks.
+  CI, local development and production all run Node 24 (`.nvmrc`, `engines`
+  `24.x`, `@types/node` `^24`), Vercel's newest supported runtime. Dependabot
+  ignores Node major bumps.
 - `cd ios/RouteKit && swift test` — RouteKit tests.
 - `cd ios && xcodegen generate` — regenerate the uncommitted `.xcodeproj`.
 - CI (`.github/workflows/ci.yml`) runs `check`, `routekit` and `pre-commit`;
