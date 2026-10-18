@@ -27,6 +27,8 @@ targets:
       path: Loopr/Info.plist
       properties:
         CFBundleDisplayName: Loopr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         NSLocationWhenInUseUsageDescription: Loopr can start a route from where you are.
