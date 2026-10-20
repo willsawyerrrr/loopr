@@ -142,13 +142,13 @@ export function validateGuidance(
     }
   }
 
-  const maxRadius = targetMeters * cfg.pinRadiusFactor;
-  for (const pin of pins) {
-    const distance = haversine(start, pin);
-    if (distance > maxRadius) {
+  if (pins.length > 0) {
+    const tour = closedLength(start, orderPins(start, pins, null));
+    const maxTour = targetMeters * cfg.maxTourFactor;
+    if (tour > maxTour) {
       throw new GuidanceError(
-        `A waypoint is ${(distance / 1000).toFixed(1)} km from the start; ` +
-          `at most ${(maxRadius / 1000).toFixed(1)} km for a ${(targetMeters / 1000).toFixed(1)} km route`,
+        `Your waypoints need a ${(tour / 1000).toFixed(1)} km round trip from the start; ` +
+          `at most ${(maxTour / 1000).toFixed(1)} km for a ${(targetMeters / 1000).toFixed(1)} km route`,
       );
     }
   }

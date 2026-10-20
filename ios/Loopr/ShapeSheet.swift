@@ -190,8 +190,8 @@ struct ShapeSheet: View {
     private var hint: String {
         if settingStart { return "Tap the map to place the start; drag its marker to move it. The loop ends where it starts." }
         if let targetKm, !unreachable.isEmpty {
-            let limit = (targetKm * RouteShape.reachFraction).formatted(.number.precision(.fractionLength(0...1)))
-            return "Orange pins are more than \(limit) km from the start, too far for a \(RouteFormat.distance(km: targetKm)) loop. Move them closer or raise the distance."
+            let limit = (targetKm * RouteShape.tourFactor).formatted(.number.precision(.fractionLength(0...1)))
+            return "Orange pins need a round trip of more than \(limit) km from the start, too far for a \(RouteFormat.distance(km: targetKm)) loop. Move them closer together or raise the distance."
         }
         if start == nil, let failure { return "\(failure) Search for a place or tap Set start to choose one." }
         return shape.canAddPin

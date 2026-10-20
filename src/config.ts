@@ -26,8 +26,8 @@ export const DEFAULTS = {
   /** Route steering (`waypoints` / `heading`). */
   guided: {
     maxWaypoints: 3,
-    /** A pin may be at most this fraction of the target distance from the start. */
-    pinRadiusFactor: 0.75,
+    /** The shortest straight-line tour from the start through every pin and back may be at most this multiple of the target distance. */
+    maxTourFactor: 1.5,
     /** Fraction of the target the final route may differ by without a warning. */
     tolerance: 0.07,
     /** Fraction of the target at which tuning stops early. */
