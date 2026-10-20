@@ -129,10 +129,11 @@ with a map centred on the start. The row shows the current shape (`Custom start 
 
 Limits:
 
-- A pin further from the start than 0.75 × the target distance can't be part of a
-  loop of that length. The distance is measured from the chosen start (else the
-  default start, else the device location). The pin turns orange and the server
-  rejects the request; move it closer or raise the distance.
+- Pins whose shortest straight-line round trip from the start is longer than
+  1.5 × the target distance can't be part of a loop of that length, however close
+  each is on its own. The trip starts from the chosen start (else the default
+  start, else the device location). The pins turn orange and the server rejects
+  the request; move them closer together or raise the distance.
 - When the pins force a length well off the target, the route is still returned
   and the server adds a warning giving its real length.
 - Trail Router isn't guaranteed to follow pins exactly: a route passes near each

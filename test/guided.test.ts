@@ -126,9 +126,19 @@ describe("validateGuidance", () => {
     }
   });
 
-  it("rejects a pin further than 0.75 x the target from the start", () => {
+  it("rejects a lone pin whose round trip exceeds 1.5 x the target", () => {
     expect(() => ok([destination(START, 0, 3700)])).not.toThrow();
-    expect(() => ok([destination(START, 0, 3800)])).toThrow(/at most 3\.8 km/);
+    expect(() => ok([destination(START, 0, 3800)])).toThrow(
+      /7\.6 km round trip.*at most 7\.5 km/,
+    );
+  });
+
+  it("rejects pins that are each near but whose tour is too long", () => {
+    const spread = [0, 120, 240].map((b) => destination(START, b, 400));
+    expect(() => validateGuidance(START, 1000, spread, undefined)).toThrow(
+      /2\.2 km round trip.*at most 1\.5 km for a 1\.0 km route/,
+    );
+    expect(() => validateGuidance(START, 1500, spread, undefined)).not.toThrow();
   });
 
   it("rejects an invalid heading", () => {

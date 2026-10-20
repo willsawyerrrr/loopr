@@ -23,8 +23,8 @@ public enum CompassPoint: Int, CaseIterable, Codable, Sendable {
 /// points to pass through and a rough heading.
 public struct RouteShape: Codable, Equatable, Sendable {
     public static let maxPins = 3
-    /// The furthest a pin may sit from the start, as a fraction of the target distance (the server rejects pins beyond it).
-    public static let reachFraction = 0.75
+    /// The longest straight-line round trip from the start through every pin, as a multiple of the target distance (the server rejects pins beyond it).
+    public static let tourFactor = 1.5
 
     public private(set) var pins: [RoutePoint]
     /// Degrees clockwise from north in `[0, 360)`, or `nil` for no preference.
@@ -92,10 +92,27 @@ public struct RouteShape: Codable, Equatable, Sendable {
         pins.remove(at: index)
     }
 
-    /// The indices of pins further from `start` than the server accepts for a loop of `targetKm`.
+    /// The indices of all pins when the shortest round trip from `start` through them is longer than the server accepts for a loop of `targetKm`; empty otherwise.
     public func unreachablePins(from start: RoutePoint, targetKm: Double) -> Set<Int> {
-        let limit = targetKm * 1000 * Self.reachFraction
-        return Set(pins.indices.filter { start.distanceMeters(to: pins[$0]) > limit })
+        guard !pins.isEmpty else { return [] }
+        return shortestTourMeters(from: start) > targetKm * 1000 * Self.tourFactor ? Set(pins.indices) : []
+    }
+
+    /// The length of the shortest straight-line round trip from `start` through every pin.
+    public func shortestTourMeters(from start: RoutePoint) -> Double {
+        func length(_ order: [RoutePoint]) -> Double {
+            let path = [start] + order + [start]
+            return zip(path, path.dropFirst()).reduce(0) { $0 + $1.0.distanceMeters(to: $1.1) }
+        }
+        func orders(_ items: [RoutePoint]) -> [[RoutePoint]] {
+            guard items.count > 1 else { return [items] }
+            return items.indices.flatMap { i in
+                var rest = items
+                let first = rest.remove(at: i)
+                return orders(rest).map { [first] + $0 }
+            }
+        }
+        return orders(pins).map(length).min() ?? 0
     }
 
     /// e.g. `Custom start · 2 pins · NE`; `Off` when empty.

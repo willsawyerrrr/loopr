@@ -109,12 +109,22 @@ private func json(_ request: RouteRequest) throws -> [String: Any] {
         #expect(headingOnly["heading"] as? Double == 0)
     }
 
-    @Test func flagsPinsBeyondReach() {
+    @Test func flagsPinsWhoseTourIsTooLong() {
         let near = RoutePoint(longitude: 151.2093, latitude: -33.8598)  // ~1 km north
         let far = RoutePoint(longitude: 151.2093, latitude: -33.7788)  // ~10 km north
         let shape = RouteShape(pins: [near, far])
-        #expect(shape.unreachablePins(from: start, targetKm: 5) == [1])
+        #expect(shape.unreachablePins(from: start, targetKm: 5) == [0, 1])
         #expect(shape.unreachablePins(from: start, targetKm: 20).isEmpty)
+    }
+
+    @Test func countsPinsInDifferentDirectionsTowardTheTour() {
+        let north = RoutePoint(longitude: 151.2093, latitude: -33.8598)  // ~1 km north
+        let east = RoutePoint(longitude: 151.2200, latitude: -33.8688)  // ~1 km east
+        let south = RoutePoint(longitude: 151.2093, latitude: -33.8778)  // ~1 km south
+        let spread = RouteShape(pins: [north, east, south])
+        #expect(spread.unreachablePins(from: start, targetKm: 2).count == 3)
+        #expect(spread.unreachablePins(from: start, targetKm: 4).isEmpty)
+        #expect(RouteShape(pins: [north]).unreachablePins(from: start, targetKm: 2).isEmpty)
     }
 
     @Test func measuresDistance() {

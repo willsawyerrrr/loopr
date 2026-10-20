@@ -550,10 +550,10 @@ describe("POST /api/route — waypoints and heading", () => {
     fakeGuidedRouter();
     const far: [number, number] = [START[0] + 0.028, START[1]];
     const json = await readJson(
-      await post({ waypoints: [far, [START[0], START[1] + 0.028]], targetDistanceKm: 5 }),
+      await post({ waypoints: [far, [START[0], START[1] + 0.028]], targetDistanceKm: 6 }),
     );
     expect(json.warnings.join()).toMatch(
-      /Your pins make this route .* km against a 5\.0 km target/,
+      /Your pins make this route .* km against a 6\.0 km target/,
     );
   });
 

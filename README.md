@@ -36,8 +36,9 @@ carries the applied `variant`.
 
 `waypoints` and `heading` steer the loop (both optional; absent = an unguided
 route exactly as above). `waypoints` is up to 3 `[lon, lat]` pins the route
-passes through (a body array on `POST`, `lon,lat;lon,lat` on `GET`); each must
-be within 0.75 × the target distance of `start`. `heading` is degrees from 0 to
+passes through (a body array on `POST`, `lon,lat;lon,lat` on `GET`); the
+shortest straight-line round trip from `start` through all of them must be at
+most 1.5 × the target distance. `heading` is degrees from 0 to
 360 (0 = north, clockwise) that the loop should head toward. Pins alone are
 visited in a short tour order; a lone pin still gets a loop, not an
 out-and-back. A heading alone makes a triangle loop pointing that way. With
