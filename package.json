@@ -14,7 +14,7 @@
   "devDependencies": {
     "@types/node": "^24",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "@upstash/redis": "^1.39.0"
