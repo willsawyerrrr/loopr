@@ -10,11 +10,7 @@ concurrency: deploy-ios
 
 jobs:
   testflight:
-    permissions:
-      id-token: write
-      contents: read
     uses: willsawyerrrr/platform/.github/workflows/ios-testflight.yml@main
     with:
       scheme: Loopr
-    secrets:
-      OP_INTEGRATION_KEY: ${{ secrets.OP_INTEGRATION_KEY }}
+    secrets: inherit

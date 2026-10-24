@@ -311,14 +311,13 @@ sent as written, without a rewrite.
 ```sh
 brew install xcodegen
 cd ios
-op run --environment "$OP_ENVIRONMENT_ID" -- xcodegen generate
+op run --environment b5zkkwxuutlttwbrv5xhgojye4 --environment wukpvhxkhkygbjbpg2jl4urine -- xcodegen generate
 open Loopr.xcodeproj
 ```
 
-The signing team (`DEVELOPMENT_TEAM`) comes from the project's 1Password
-Environment, which `op run` injects into `xcodegen`. Export
-`OP_ENVIRONMENT_ID` in your shell; copy it from the 1Password app > Developer >
-View Environments > Manage environment > Copy environment ID. Then pick your device (or a simulator) and run. Calendar runs
+The signing team (`DEVELOPMENT_TEAM`) comes from the shared Apple Development
+1Password Environment, which `op run` injects into `xcodegen` alongside the
+Loopr Environment (project-specific variables only). Then pick your device (or a simulator) and run. Calendar runs
 need a device (or simulator) with the Runna calendar subscribed. On a device with a
 free team the install expires after 7 days; re-run from Xcode to renew it.
 
@@ -345,10 +344,11 @@ team's 7-day install fresh. Logs: `~/Library/Logs/loopr-deploy.log`.
 [`ios-testflight`](https://github.com/willsawyerrrr/platform/blob/main/docs/ios-testflight.md)
 workflow on every push to `main` that touches `ios/`, uploading a build to
 TestFlight (build number = run number); `ITSAppUsesNonExemptEncryption` is `false` in `Info.plist`, so builds skip the export compliance question). It needs the
-`OP_INTEGRATION_KEY` repository secret, the `OP_WORKLOAD_ID` and
-`OP_ENVIRONMENT_ID` repository variables (the workflow loads the Environment
-through 1Password Workload Identity), a 1Password Environment containing
-`DEVELOPMENT_TEAM`, `ASC_KEY_ID`, `ASC_ISSUER_ID` and `ASC_KEY_P8`, and a Loopr app record in App Store Connect
+`OP_SERVICE_ACCOUNT_TOKEN` repository secret (a 1Password service account
+scoped to the Environments), the `OP_ENVIRONMENT_IDS` repository variable
+(`b5zkkwxuutlttwbrv5xhgojye4 wukpvhxkhkygbjbpg2jl4urine`, shared first, project last), the Apple
+Development Environment (`b5zkkwxuutlttwbrv5xhgojye4`) containing `DEVELOPMENT_TEAM`, `ASC_KEY_ID`,
+`ASC_ISSUER_ID` and `ASC_KEY_P8`, and a Loopr app record in App Store Connect
 (`dev.willsawyerrrr.loopr`).
 
 In the simulator, set a location first (_Features → Location_, or
