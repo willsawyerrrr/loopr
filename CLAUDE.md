@@ -35,5 +35,7 @@ closest to the target distance; a native SwiftUI iOS 26 app drives it.
   `docs/feat/ios-app/overview.md` in the same PR.
 - `RouteConfig` defaults in `src/config.ts` are mirrored by `PaceStore` in
   RouteKit; change both together.
-- Bundle ID is `dev.willsawyerrrr.loopr`. `ios/Config/Local.xcconfig` is
-  gitignored.
+- Bundle ID is `dev.willsawyerrrr.loopr`. `DEVELOPMENT_TEAM` and the
+  TestFlight credentials live in the shared Apple Development 1Password
+  Environment; locally run
+  `op run --environment b5zkkwxuutlttwbrv5xhgojye4 --environment wukpvhxkhkygbjbpg2jl4urine -- xcodegen generate`.
