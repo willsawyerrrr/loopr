@@ -13,6 +13,4 @@ jobs:
     uses: willsawyerrrr/platform/.github/workflows/ios-testflight.yml@main
     with:
       scheme: Loopr
-      env: |
-        DEVELOPMENT_TEAM=${{ vars.DEVELOPMENT_TEAM }}
     secrets: inherit
