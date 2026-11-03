@@ -17,6 +17,6 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@upstash/redis": "^1.39.0"
+    "@upstash/redis": "^1.40.0"
   }
 }
