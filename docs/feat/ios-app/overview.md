@@ -311,13 +311,14 @@ sent as written, without a rewrite.
 ```sh
 brew install xcodegen
 cd ios
-op run --environment b5zkkwxuutlttwbrv5xhgojye4 --environment wukpvhxkhkygbjbpg2jl4urine -- xcodegen generate
+(set -a; . ~/willsawyerrrr.dev/.env.apple; . ~/willsawyerrrr.dev/loopr/.env; xcodegen generate)
 open Loopr.xcodeproj
 ```
 
 The signing team (`DEVELOPMENT_TEAM`) comes from the shared Apple Development
-1Password Environment, which `op run` injects into `xcodegen` alongside the
-Loopr Environment (project-specific variables only). Then pick your device (or a simulator) and run. Calendar runs
+1Password Environment, mounted as `~/willsawyerrrr.dev/.env.apple`; the command
+exports it to `xcodegen` alongside the Loopr Environment mounted as
+`~/willsawyerrrr.dev/loopr/.env` (project-specific variables only). Then pick your device (or a simulator) and run. Calendar runs
 need a device (or simulator) with the Runna calendar subscribed. On a device with a
 free team the install expires after 7 days; re-run from Xcode to renew it.
 
