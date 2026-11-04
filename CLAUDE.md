@@ -37,5 +37,6 @@ closest to the target distance; a native SwiftUI iOS 26 app drives it.
   RouteKit; change both together.
 - Bundle ID is `dev.willsawyerrrr.loopr`. `DEVELOPMENT_TEAM` and the
   TestFlight credentials live in the shared Apple Development 1Password
-  Environment; locally run
-  `op run --environment b5zkkwxuutlttwbrv5xhgojye4 --environment wukpvhxkhkygbjbpg2jl4urine -- xcodegen generate`.
+  Environment, mounted locally as `~/willsawyerrrr.dev/.env.apple` (Loopr's own
+  as `~/willsawyerrrr.dev/loopr/.env`); locally run
+  `(set -a; . ~/willsawyerrrr.dev/.env.apple; . ~/willsawyerrrr.dev/loopr/.env; xcodegen generate)`.
