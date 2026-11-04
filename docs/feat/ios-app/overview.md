@@ -311,14 +311,11 @@ sent as written, without a rewrite.
 ```sh
 brew install xcodegen
 cd ios
-(set -a; . ~/willsawyerrrr.dev/.env.apple; . ~/willsawyerrrr.dev/loopr/.env; xcodegen generate)
+xcodegen generate
 open Loopr.xcodeproj
 ```
 
-The signing team (`DEVELOPMENT_TEAM`) comes from the shared Apple Development
-1Password Environment, mounted as `~/willsawyerrrr.dev/.env.apple`; the command
-exports it to `xcodegen` alongside the Loopr Environment mounted as
-`~/willsawyerrrr.dev/loopr/.env` (project-specific variables only). Then pick your device (or a simulator) and run. Calendar runs
+`xcodegen` reads the signing team from `DEVELOPMENT_TEAM` in its environment. Then pick your device (or a simulator) and run. Calendar runs
 need a device (or simulator) with the Runna calendar subscribed. On a device with a
 free team the install expires after 7 days; re-run from Xcode to renew it.
 
