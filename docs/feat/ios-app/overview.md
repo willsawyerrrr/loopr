@@ -344,8 +344,8 @@ workflow on every push to `main` that touches `ios/`, uploading a build to
 TestFlight (build number = run number); `ITSAppUsesNonExemptEncryption` is `false` in `Info.plist`, so builds skip the export compliance question). It needs the
 `OP_SERVICE_ACCOUNT_TOKEN` repository secret (a 1Password service account
 scoped to the Environments), the `OP_ENVIRONMENT_IDS` repository variable
-(`b5zkkwxuutlttwbrv5xhgojye4 wukpvhxkhkygbjbpg2jl4urine`, shared first, project last), the Apple
-Development Environment (`b5zkkwxuutlttwbrv5xhgojye4`) containing `DEVELOPMENT_TEAM`, `ASC_KEY_ID`,
+(the Apple Development and Loopr Environment IDs, shared first), the Apple
+Development Environment containing `DEVELOPMENT_TEAM`, `ASC_KEY_ID`,
 `ASC_ISSUER_ID` and `ASC_KEY_P8`, and a Loopr app record in App Store Connect
 (`dev.willsawyerrrr.loopr`).
 
