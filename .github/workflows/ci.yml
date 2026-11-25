@@ -19,7 +19,9 @@ jobs:
       - run: npm test
 
   routekit:
-    runs-on: macos-26
+    runs-on: xcode-27
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.2.app
     steps:
       - uses: actions/checkout@v7
       - run: swift test
