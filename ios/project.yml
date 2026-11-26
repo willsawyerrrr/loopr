@@ -2,7 +2,7 @@ name: Loopr
 options:
   bundleIdPrefix: dev.willsawyerrrr
   deploymentTarget:
-    iOS: "26.0"
+    iOS: "27.0"
   createIntermediateGroups: true
 settings:
   base:

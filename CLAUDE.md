@@ -4,7 +4,7 @@
 
 Loopr generates loop routes (GPX) for a run, walk or ride. A Vercel
 TypeScript function (`/api/route`) calls Trail Router and picks the candidate
-closest to the target distance; a native SwiftUI iOS 26 app drives it.
+closest to the target distance; a native SwiftUI iOS 27 app drives it.
 
 ## Layout
 
