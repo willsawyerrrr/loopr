@@ -126,7 +126,7 @@ struct SettingsView: View {
                     }
                 } else {
                     morningEnabled = false
-                    MorningRefresh.schedule()
+                    Task { await MorningRefresh.schedule() }
                     notificationsDenied = false
                 }
             }
