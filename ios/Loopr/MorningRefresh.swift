@@ -15,23 +15,23 @@ enum MorningRefresh {
     static func enable() async -> Bool {
         let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
         UserDefaults.standard.set(granted, forKey: enabledKey)
-        schedule()
+        await schedule()
         return granted
     }
 
     /// Requests the next refresh for the coming 06:00, or cancels it when the setting is off.
-    static func schedule() {
+    static func schedule() async {
         BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
         guard isEnabled else { return }
         let request = BGAppRefreshTaskRequest(identifier: identifier)
         request.earliestBeginDate = RunPlan.nextMorning(after: .now)
-        try? BGTaskScheduler.shared.submit(request)
+        try? await BGTaskScheduler.shared.submitTaskRequest(request)
     }
 
     /// Generates the route for today's run (or the next one) if it is missing, and notifies.
     static func perform() async {
         guard isEnabled else { return }
-        defer { schedule() }
+        defer { await schedule() }
         guard RunCalendar.access == .granted, let run = RunCalendar.upcomingRuns()?.first,
             RouteStore.route(forEventKey: run.key) == nil,
             let route = try? await RunPreparation.prepare(run, background: true)

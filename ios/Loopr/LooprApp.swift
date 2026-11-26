@@ -15,7 +15,7 @@ struct LooprApp: App {
         }
         .modelContainer(RouteStore.container)
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { MorningRefresh.schedule() }
+            if phase == .background { Task { await MorningRefresh.schedule() } }
         }
         .backgroundTask(.appRefresh(MorningRefresh.identifier)) {
             await MorningRefresh.perform()
